@@ -25,7 +25,7 @@ from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
 from HOSP_pipeline.utils.utils import get_largest_non_edge_component, get_largest_non_near_edge_component
 
-wandb.init(project="hops_pipeline", entity="marina-dominguez", name="1x1mm_VolumeComputation_onlyLabelledProstates")
+wandb.init(project="hops_pipeline", entity="marina-dominguez", name="0.6x0.9mm_VolumeComputation_onlyLabelledProstates")
 
 # Log the entire config dictionary
 wandb.config.update(config)
@@ -89,8 +89,8 @@ _, _, test_dataloader = get_train_val_test_Dataloaders(train_transforms=train_tr
 print("Test dataloader length:", len(test_dataloader))
 
 # Metadata for voxel dimensions
-pixel_spacing_x = 1.0 #0.5  # mm
-pixel_spacing_y = 1.0 #0.5  # mm
+pixel_spacing_x = 0.6 #1.0 #0.5  # mm
+pixel_spacing_y = 0.9 #1.0 #0.5  # mm
 slice_thickness = 3.0  # mm
 slice_location_difference = 3.2999  # mm (computed from DICOM Slice Location differences)
 
