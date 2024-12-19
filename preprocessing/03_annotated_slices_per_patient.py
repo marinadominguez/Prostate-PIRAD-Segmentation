@@ -1,3 +1,14 @@
+"""
+
+This script takes as input the combined annotation JSON file produced by the previous steps and performs several analytic tasks, such as:
+Checking the existence of the combined annotation file.
+Counting how many slices are annotated per patient.
+Creating a histogram illustrating the distribution of the number of annotated slices per patient.
+Counting and listing the number of unique patients and identifying patients with multiple entries.
+Saving a JSON file summarizing which slices are annotated for each patient, necessary for the next interpolation step of the pipeline.
+
+"""
+
 import json
 import ast
 from collections import Counter, defaultdict
@@ -5,7 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-combined_annotated_prostates = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_october_prostates.json'
+combined_annotated_prostates = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_PIRAD3.json'
 
 def check_file_exists(filepath):
     """
@@ -23,21 +34,6 @@ def load_json(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
-def get_dataset_info(data):
-    """
-    Extract and print basic information about the dataset.
-    """
-    # Check if 'data' key exists in data[2]
-    if len(data) > 2 and 'data' in data[2]:
-        dataset = data[2]['data']
-        print(f'Length of dataset: {len(dataset)}')
-        print(f'Keys of dataset: {dataset[0].keys()}')
-        for entry in dataset:
-            labelmap1 = ast.literal_eval(entry.get('labelmap1', '{}'))  # Default to empty dict if missing
-            print(f'Length of labelmap1: {len(labelmap1)}')
-    else:
-        print("The 'data' key is missing in the expected structure.")
-
 def count_labeled_slices(data):
     """
     Count the number of labeled slices per patient and return as a DataFrame.
@@ -47,18 +43,19 @@ def count_labeled_slices(data):
         if entry['label'] != 0:
             count = sum(1 for label in entry['label'] if label != 0)
             dict_labeledslices_patient[entry['Folder_id']] = count
-    return pd.DataFrame.from_dict(dict_labeledslices_patient, orient='index', columns=['PROSTATE']).reset_index().rename(columns={'index': 'Folder_id'})
+    dataframe = pd.DataFrame.from_dict(dict_labeledslices_patient, orient='index', columns=['PIRAD3']).reset_index().rename(columns={'index': 'Folder_id'})
+    return dataframe
 
 def plot_histogram(df):
     """
     Plot a histogram of the number of labeled slices per patient.
     """
-    plt.hist(df['PROSTATE'], bins=20, edgecolor='black')
+    plt.hist(df['PIRAD3'], bins=20, edgecolor='black')
     plt.title('Distribución del número de slices etiquetadas por próstata')
     plt.xlabel('Número de slices etiquetadas')
     plt.ylabel('Número de pacientes')
     plt.show()
-    plt.savefig('/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/histogram_labeled_slices.png')
+    plt.savefig('/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/PIRAD3/histogram_labeled_slices_december.png')
     plt.close()
 
 def unique_patient_count(data):
@@ -108,9 +105,6 @@ def main():
     check_file_exists(combined_annotated_prostates)
     data = load_json(combined_annotated_prostates)
     
-    # Print dataset info
-    get_dataset_info(data)
-    
     # Count labeled slices
     df = count_labeled_slices(data)
     print(df.head())
@@ -125,7 +119,7 @@ def main():
     annotated_slices = count_annotated_slices(data)
     
     # Save results to JSON
-    save_to_json(annotated_slices, '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/annotated_slices_per_patient_october.json')
+    save_to_json(annotated_slices, '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/PIRAD3/annotated_slices_per_patient_december.json')
 
 if __name__ == "__main__":
     main()

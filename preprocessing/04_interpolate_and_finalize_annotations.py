@@ -1,25 +1,41 @@
+"""
+
+This script takes the previously combined and analyzed dataset and applies final preprocessing steps prior to model training. 
+It:
+- Filters out patients with fewer than a specified minimum number of annotated slices.
+- Filters out patients whose maximum gap between annotated slices exceeds a specified threshold.
+- Uses a custom interpolation method to “fill in” unannotated slices between annotated slices, progressively adding intermediate 
+    masks to create a smoother and more continuous annotation volume.
+- Produces a final JSON file with interpolated annotations suitable for downstream tasks such as model training.
+
+"""
+
 import json
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-import wandb
 from scipy.ndimage import distance_transform_edt
 
-# Initialize W&B
-wandb.init(project="hops_pipeline", entity="marina-dominguez", name="density_preprocess")
 
 # Load the combined dataset
-with open('/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_october_prostates.json', 'r') as f:
+combined_dataset_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_PIRAD3.json'
+# Load the annotated_slices_per_patient 
+annotated_slices_per_patient_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/PIRAD3/annotated_slices_per_patient_december.json'
+
+# Load the data
+with open(combined_dataset_path, 'r') as f:
     data = json.load(f)
 
-# Load the annotated_slices_per_patient (which is )
-with open('/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/annotated_slices_per_patient_october.json', 'r') as f:
+with open(annotated_slices_per_patient_path, 'r') as f:
     annotated_slices_per_patient = json.load(f)
 
 initial_len = len(data)
 print(f"Initial length: {initial_len}")
 
-def filter_patients_by_min_annotations(data, min_annotations=4):
+min_annotations = 1 #4
+max_allowed_gap = 6 #4
+
+def filter_patients_by_min_annotations(data, min_annotations):
     """
     Filters out patients who have fewer than the minimum number of annotations.
 
@@ -31,6 +47,7 @@ def filter_patients_by_min_annotations(data, min_annotations=4):
     - filtered_data: List of patients who meet the annotation criterion.
     """
     filtered_data = []
+    testing_set = set()
 
     for patient in data:
         patient_id = patient['Folder_id']
@@ -39,16 +56,23 @@ def filter_patients_by_min_annotations(data, min_annotations=4):
         if num_annotations >= min_annotations:
             # If the patient has at least the minimum number of annotations, keep the patient
             filtered_data.append(patient)
+            if num_annotations == 1: 
+                testing_set.add(patient_id)
         else:
             print(f"Excluding patient {patient_id} with {num_annotations} annotations.")
+            if num_annotations == 1: 
+                testing_set.add(patient_id)
+                # since we can not use it for interpolation, and therefore training,
+                # we are going to use these for testing
     
     final_len = len(filtered_data)
     print(f"Final length: {final_len}")
     print(f"Removed {initial_len - final_len} patients with fewer than {min_annotations} annotations.")
+    print(f"Testing set: {testing_set}")
 
     return filtered_data
 
-def filter_patients_by_max_gap(patients_data, max_allowed_gap=4):
+def filter_patients_by_max_gap(patients_data, max_allowed_gap):
     """
     Filters out patients who have a maximum gap larger than the allowed threshold.
 
@@ -72,10 +96,9 @@ def filter_patients_by_max_gap(patients_data, max_allowed_gap=4):
         annotated_slices = [int(slice_data['slice'].split('_')[-1].replace('.dcm', '').split('/')[-1]) for slice_data in slices if any(pixel > 0 for pixel in slice_data['label'])]
         print(f"Annotated slices: {annotated_slices}")
 
-        if len(annotated_slices) < 2: # not necessary, since we already filtered out patients with less than 4 annotations
-            # but just as a sanity check, we can keep it
-            # making sure that we never enter this condition
-            print(f"Excluding patient {patient_id} with fewer than 2 annotated slices.")
+        if len(annotated_slices) < 1: #2: # not necessary, since we already filtered out patients with less than 4 annotations
+            # but just as a sanity check, making sure that we never enter this condition
+            print(f"Excluding patient {patient_id} with fewer than 1 annotated slices.")
             continue  # Skip if there are fewer than two annotated slices
 
         # Calculate gaps between consecutive annotated slices
@@ -151,12 +174,7 @@ def interpolate_annotations(slices):
             print(f"Interpolating {gap_size} slice(s) between slice {current_slice['slice']} and {next_slice['slice']}")
             # Extract labels from the current and next slices
             current_label = np.array(current_slice['label'])
-            #print(f"Current label shape: {current_label.shape}") # Current label shape: (262144,)
-            #print(f"Current label: {current_label}")  # Current label: [0. 0. 0. ... 0. 0. 0.]
-            #print(f"Current label type: {type(current_label)}")  # Current label type: <class 'numpy.ndarray'>
-            #print(f"Current label shape (if applicable): {current_label.shape if isinstance(current_label, np.ndarray) else 'Not an array'}") # Current label shape (if applicable): (262144,)
             next_label = np.array(next_slice['label'])
-            # print(f"Next label shape: {next_label.shape}") # Next label shape: (262144,)
 
             # Compute the union and intersection of the two label arrays
             union = np.maximum(current_label, next_label)  # 1 where either slice has a label
@@ -169,26 +187,16 @@ def interpolate_annotations(slices):
 
             # Sort the distances to make sure we're selecting pixels in a progressive manner
             sorted_distances = np.sort(distance_map[union_minus_intersection > 0])
-            #print(f"Sorted distances: {sorted_distances}")
             num_union_pixels = len(sorted_distances)
-            #print(f"Number of union pixels: {num_union_pixels}")
 
             for j in range(1, gap_size + 1):
                 # Calculate weight for this interpolated slice
                 weight = j / (gap_size + 1)
-                #print(f"Weight: {weight}")
-                # this weight is going to determine how many closed pixels to the intersection we are going to accept as the new interpolated label
-                # the new interpolated labels will be the union of the intersection and the pixels in the union_minus_intersection that are closer to the intersection in proportion to the weight
-                # the closer to the intersection, the more likely to be part of the new interpolated label
-                # the further from the intersection, the less likely to be part of the new interpolated label
-                # the weight will determine the proportion of the pixels in the union_minus_intersection that are closer to the intersection that will be part of the new interpolated label 
-
+                
                 # Determine the threshold distance based on the weight (grow progressively)
                 num_pixels_to_select = int(weight * num_union_pixels)
-                #print(f"Number of pixels to select: {num_pixels_to_select}")
                 if num_pixels_to_select > 0:
                     threshold = sorted_distances[num_pixels_to_select - 1]  # Find the distance threshold
-                    #print(f"Threshold: {threshold}")
                     # Select pixels that are within the distance threshold
                     selected_pixels = (distance_map <= threshold).astype(int) * union_minus_intersection
                     # The interpolated mask will be the intersection plus a proportion of the difference
@@ -196,64 +204,6 @@ def interpolate_annotations(slices):
                 else:
                     # If there are no pixels to select, just use the intersection
                     interpolated_label = intersection
-                
-                # Threshold the distance map to grow the region progressively
-                #threshold = np.percentile(distance_map[union_minus_intersection > 0], weight * 100)
-                #print(f"Threshold: {threshold}")
-
-                # Select pixels that are within the distance threshold
-                #selected_pixels = (distance_map <= threshold).astype(int) * union_minus_intersection
-
-                # The interpolated mask will be the intersection plus a proportion of the difference
-                #interpolated_label = intersection + selected_pixels
-                
-                """
-                if interpolated_label.sum() > 0: 
-                    # resize (262144,) to (512, 512)
-                    if np.isscalar(current_label):  # If it's a single scalar value (0 or 1)
-                        print(f"Current label is a scalar")
-                        scalar_label = current_label  # This will be 0 or 1
-                        reshaped_current_label = np.full((512, 512), scalar_label)
-                        print(reshaped_current_label.shape)  # This will print (512, 512)
-                    else:
-                        # Perform your normal reshaping/interpolation if it's a full image
-                        reshaped_current_label = current_label.reshape(512, 512)
-
-                    if np.isscalar(interpolated_label):  # If it's a single scalar value (0 or 1)
-                        print(f"Interpolated label is a scalar")
-                        scalar_label = interpolated_label  # This will be 0 or 1
-                        reshaped_interpolated_label = np.full((512, 512), scalar_label)
-                        print(reshaped_interpolated_label.shape)  # This will print (512, 512)
-                    else:
-                        # Perform your normal reshaping/interpolation if it's a full image
-                        reshaped_interpolated_label = interpolated_label.reshape(512, 512)
-                    
-                    if np.isscalar(next_label):  # If it's a single scalar value (0 or 1)
-                        print(f"Interpolated label is a scalar")
-                        scalar_label = next_label  # This will be 0 or 1
-                        reshaped_next_label = np.full((512, 512), scalar_label)
-                        print(reshaped_next_label.shape)  # This will print (512, 512)
-                    else:
-                        # Perform your normal reshaping/interpolation if it's a full image
-                        reshaped_next_label = next_label.reshape(512, 512)
-                    
-                    # make a 1x3 subplot
-                    plt.subplot(1, 3, 1) # 1 row, 3 columns, 1st subplot
-                    plt.imshow(reshaped_current_label, cmap='gray')
-                    plt.title("Current label")
-                    plt.axis('off')
-                    plt.subplot(1, 3, 2) # 1 row, 3 columns, 2nd subplot
-                    plt.imshow(reshaped_interpolated_label, cmap='gray')
-                    plt.title("Interpolated label")
-                    plt.axis('off')
-                    plt.subplot(1, 3, 3) # 1 row, 3 columns, 3rd subplot
-                    plt.imshow(reshaped_next_label, cmap='gray')
-                    plt.title("Next label")
-                    plt.axis('off')
-                    plt.show()
-                    wandb.log({"Interpolated label": [wandb.Image(plt, caption="First Interpolated label")]})
-                    plt.close()
-                    """
 
                 # Create a copy of the slice and assign the interpolated label
                 interpolated_slice = slices[current_index + j].copy()
@@ -302,7 +252,7 @@ def flatten_interpolated_data(interpolated_patients_data):
 
 
 print("Applying first filtering based on number of annotations...")
-removed_not_enough_annotated_data = filter_patients_by_min_annotations(data, min_annotations=4)
+removed_not_enough_annotated_data = filter_patients_by_min_annotations(data, min_annotations)
 
 print("----------------------------------------")
 print("Applying second filtering based on maximum gap between annotated slices...")
@@ -313,7 +263,7 @@ for entry in removed_not_enough_annotated_data:
         patients_data[patient_id] = []
     patients_data[patient_id].append(entry)
 
-filtered_patients_data = filter_patients_by_max_gap(patients_data, max_allowed_gap=4)
+filtered_patients_data = filter_patients_by_max_gap(patients_data, max_allowed_gap)
 
 print("----------------------------------------")
 print("Interpolating annotations for patients with gaps...")
@@ -329,10 +279,9 @@ print("Saving the filtered data in the specified output path as a JSON file...")
 flat_interpolated_data = flatten_interpolated_data(interpolated_patients_data)
 
 # Save the flattened data
-output_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/preprocessing/interpolation_preprocess/interpolated_annotated_prostates_october.json'
+output_path = f'/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/preprocessing/interpolated_ALL_annotated_PIRAD3_december_minannot{min_annotations}_maxgap{max_allowed_gap}.json'
 print(f"Saving the high density interpolated data to {output_path}...")
 with open(output_path, 'w') as f:
     json.dump(flat_interpolated_data, f)
 
 print("Saved and completed!")
-wandb.finish()

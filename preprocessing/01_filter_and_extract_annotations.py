@@ -1,15 +1,22 @@
+"""
+
+This script filters a dataset of patient annotations by removing patients with no labeled lesions and 
+creates a new JSON file with only those patients. It also generates an Excel file summarizing the 
+filtered annotations along with patient DICOM folder information.
+
+"""
+
 import json
 import os
 import ast
 import pandas as pd
 
 # Define the file names
-input_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/24_10_2024/annotations_24_Oct.json'
-#'/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/23_09_2024/23_sept.json'
-#'/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/29_08_2024/data_august_2024.json'
-dicom_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/dicoms.json' # DON'T CHANGE IT, this one is the dicom with all the information, 
-output_json_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/24_10_2024/all_annotated_patients_october_2024.json'
-output_excel_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/24_10_2024/all_annotated_patients_october_2024.xlsx'
+input_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/finalversiondata.json'
+dicom_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/dicoms_december.json'
+
+output_json_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.json'
+output_excel_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.xlsx'
 
 # Check if the input file exists
 if not os.path.exists(input_file) or not os.path.exists(dicom_file):
