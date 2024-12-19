@@ -7,11 +7,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
-from HOSP_pipeline.preprocessing.dataset_hosp import get_train_val_test_Dataloaders
-from HOSP_pipeline.models.unet3d import UNet3D
-from HOSP_pipeline.config.config import IN_CHANNELS, TEST_PATIENT_IDS, PROSTATE_CHECKPOINT
-from HOSP_pipeline.utils.utils import resize_image_and_label
-from HOSP_pipeline.training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
+from ..preprocessing.dataset_hosp import get_train_val_test_Dataloaders
+from ..models.unet3d import UNet3D
+from ..config.config import IN_CHANNELS, TEST_PATIENT_IDS, PROSTATE_CHECKPOINT
+from ..utils.utils import resize_image_and_label
+from ..training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
 import numpy as np
 
 from skimage.measure import label

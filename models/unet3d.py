@@ -13,7 +13,7 @@ from torch import nn
 from torchsummary import summary
 import torch
 import time
-import HOSP_pipeline.config.config as cfg
+import ..config.config as cfg
 
 class Conv3DBlock(nn.Module):
     """

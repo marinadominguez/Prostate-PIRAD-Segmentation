@@ -16,7 +16,7 @@ import numpy as np
 import pydicom
 import ast
 import pandas as pd
-from HOSP_pipeline.config.config import BASE_PATH
+from ..config.config import BASE_PATH
 from collections import defaultdict
 
 def load_dicom_files(dicom_folder):

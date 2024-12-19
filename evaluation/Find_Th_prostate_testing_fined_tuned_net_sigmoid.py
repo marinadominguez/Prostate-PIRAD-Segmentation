@@ -7,11 +7,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
-from HOSP_pipeline.preprocessing.dataset_hosp import get_train_val_test_Dataloaders  # Ensure this is the correct import
-from HOSP_pipeline.models.unet3d import UNet3D
-from HOSP_pipeline.config.config import IN_CHANNELS, CHECKPOINT_PATH, WANDB_TEST_NAME, SPLIT_SEED, ALPHA #, DICE_WEIGHT, FOREGROUND_WEIGHT
-from HOSP_pipeline.utils.utils import resize_image_and_label, plot_patient_slices, plot_confusion_matrix
-from HOSP_pipeline.training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
+from ..preprocessing.dataset_hosp import get_train_val_test_Dataloaders  # Ensure this is the correct import
+from ..models.unet3d import UNet3D
+from ..config.config import IN_CHANNELS, CHECKPOINT_PATH, WANDB_TEST_NAME, SPLIT_SEED, ALPHA #, DICE_WEIGHT, FOREGROUND_WEIGHT
+from ..utils.utils import resize_image_and_label, plot_patient_slices, plot_confusion_matrix
+from ..training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
 import numpy as np
 import random
 import wandb
@@ -19,13 +19,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
 from matplotlib.colors import LogNorm
 import torch.nn.functional as F
-from HOSP_pipeline.utils.plot import visualize_slices_labels_prediction_overlap, visualize_slice_predictions
-from HOSP_pipeline.config.config import config
+from ..utils.plot import visualize_slices_labels_prediction_overlap, visualize_slice_predictions
+from ..config.config import config
 #import segmentation_models_pytorch_3d as smp
 
 
-wandb.init(project="hops_pipeline", entity="marina-dominguez", name="Find_Threshold_PubliclyTrainedNetwork_0.7_5-5")
-           #from_scratch_find_threshold_{ALPHA}alphaCustomFocal")#_{DICE_WEIGHT}weightDice_{FOREGROUND_WEIGHT}ForegrWeight")
+wandb.init(project="hops_pipeline", entity="marina-dominguez", name = f"from_scratch_find_threshold_{ALPHA}alphaCustomFocal") #_{DICE_WEIGHT}weightDice_{FOREGROUND_WEIGHT}ForegrWeight")
+           # name="Find_Threshold_PubliclyTrainedNetwork_0.7_5-5")
 
 # Log the entire config dictionary
 wandb.config.update(config)

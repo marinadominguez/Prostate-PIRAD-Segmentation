@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from HOSP_pipeline.config.config import BCE_WEIGHTS, NUM_CLASSES, BACKGROUND_AS_CLASS, DICE_WEIGHT, ALPHA_TVERSKY, BETA_TVERSKY, GAMMA
-from HOSP_pipeline.utils.utils import to_one_hot
+from ..config.config import BCE_WEIGHTS, NUM_CLASSES, BACKGROUND_AS_CLASS, DICE_WEIGHT, ALPHA_TVERSKY, BETA_TVERSKY, GAMMA
+from ..utils.utils import to_one_hot
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 if BACKGROUND_AS_CLASS: NUM_CLASSES += 1

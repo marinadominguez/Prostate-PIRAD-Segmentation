@@ -1,11 +1,11 @@
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
-from HOSP_pipeline.preprocessing.dataset_hosp import get_train_val_test_Dataloaders  # Ensure this is the correct import
-from HOSP_pipeline.models.unet3d import UNet3D
-from HOSP_pipeline.config.config import NUM_CLASSES, IN_CHANNELS, BACKGROUND_AS_CLASS, CHECKPOINT_PATH, WANDB_TEST_NAME
-from HOSP_pipeline.utils.utils import resize_image_and_label, plot_patient_slices, plot_confusion_matrix
-from HOSP_pipeline.training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
+from ..preprocessing.dataset_hosp import get_train_val_test_Dataloaders  # Ensure this is the correct import
+from ..models.unet3d import UNet3D
+from ..config.config import NUM_CLASSES, IN_CHANNELS, BACKGROUND_AS_CLASS, CHECKPOINT_PATH, WANDB_TEST_NAME
+from ..utils.utils import resize_image_and_label, plot_patient_slices, plot_confusion_matrix
+from ..training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
 import numpy as np
 import wandb
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, jaccard_score

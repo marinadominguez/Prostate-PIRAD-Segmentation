@@ -13,12 +13,12 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 import pydicom
-import HOSP_pipeline.config.config as cfg
+import ..config.config as cfg
 
 import sys
 import os
 
-# Add the project directory (HOSP_pipeline) to the PYTHONPATH
+# Add the project directory (.) to the PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class Prostate3DDataset(Dataset):

@@ -4,11 +4,11 @@ import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
 import json
 import pydicom
-from HOSP_pipeline.preprocessing.dataset_hosp import Prostate3DDataset, get_train_val_test_Dataloaders
-import HOSP_pipeline.config.config as cfg
+from ..preprocessing.dataset_hosp import Prostate3DDataset, get_train_val_test_Dataloaders
+import ..config.config as cfg
 
 # Assuming your model is defined in a file called unet_model.py
-from HOSP_pipeline.models.unet3d import UNet3D
+from ..models.unet3d import UNet3D
 
 
 def load_model(model_path, device):
