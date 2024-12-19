@@ -1,3 +1,13 @@
+"""
+
+This dataloader reads from a combined JSON file containing slice-level data for multiple patients. 
+It groups the slices by patient, forming a 3D volume (H x W x D) and a corresponding label volume. 
+The dataset is then split into train, validation, and test sets.
+The code allows specifying transformations for data augmentation or normalization. 
+It also accommodates both automatically generated splits (via configuration parameters) and manually specified patient splits.
+
+"""
+
 import json
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
@@ -74,9 +84,17 @@ class Prostate3DDataset(Dataset):
 
         return sample['image'], sample['label']
 
-def get_train_val_test_Dataloaders(train_transforms, val_transforms, test_transforms):
+def get_train_val_test_Dataloaders(train_transforms, val_transforms, test_transforms, train_ids=None, val_ids=None, test_ids=None):
     """
     Creates train, validation, and test dataloaders from the dataset.
+
+    Args:
+        train_transforms: Transformations to apply to training data.
+        val_transforms: Transformations to apply to validation data.
+        test_transforms: Transformations to apply to test data.
+        train_ids (list, optional): List of patient IDs to use for training.
+        val_ids (list, optional): List of patient IDs to use for validation.
+        test_ids (list, optional): List of patient IDs to use for testing.
 
     Returns:
         DataLoader: Train DataLoader
@@ -94,50 +112,54 @@ def get_train_val_test_Dataloaders(train_transforms, val_transforms, test_transf
         if patient_id not in patients_data:
             patients_data[patient_id] = []
         patients_data[patient_id].append(entry)
-    
-    # Create list of data entries for easy access
-    patient_ids = list(patients_data.keys())
 
-    # Splitting patient IDs for train, validation, and test sets
-    if len(patient_ids) < 3:
-        raise ValueError("Not enough patients to split into train, val, and test sets.")
+    # Create list of all patient IDs
+    all_patient_ids = list(patients_data.keys())
+    print(f"All patient IDs in dataset: {all_patient_ids}")
 
-    np.random.seed(cfg.SPLIT_SEED)
-    np.random.shuffle(patient_ids)
-    
-    # Calculate number of patients for each split, ensuring at least one patient per split
-    num_patients = len(patient_ids)
-    num_test = max(1, int(num_patients * cfg.TRAIN_VAL_TEST_SPLIT[2]))
-    num_val = max(1, int(num_patients * cfg.TRAIN_VAL_TEST_SPLIT[1]))
-    num_train = max(1, int(num_patients - num_val - num_test))
+    # If IDs are provided, use them
+    if train_ids is not None and val_ids is not None and test_ids is not None:
+        # Ensure that the provided IDs are in the dataset
+        train_ids = [pid for pid in train_ids if pid in all_patient_ids]
+        val_ids = [pid for pid in val_ids if pid in all_patient_ids]
+        test_ids = [pid for pid in test_ids if pid in all_patient_ids]
 
-    train_ids = patient_ids[:num_train]
-    val_ids = patient_ids[num_train:num_train + num_val]
-    test_ids = patient_ids[num_train + num_val:]
+        # Check for any IDs not found
+        missing_ids = set(train_ids + val_ids + test_ids) - set(all_patient_ids)
+        if missing_ids:
+            print(f"The following IDs are not present in the dataset: {missing_ids}")
+
+        # Ensure no overlap between sets
+        overlap = set(train_ids) & set(val_ids) | set(train_ids) & set(test_ids) | set(val_ids) & set(test_ids)
+        if overlap:
+            raise ValueError(f"Overlap found in train, val, and test IDs: {overlap}")
+    else:
+        # If IDs are not provided, perform random split
+        np.random.seed(cfg.SPLIT_SEED)
+        np.random.shuffle(all_patient_ids)
+
+        num_patients = len(all_patient_ids)
+        num_test = max(1, int(num_patients * cfg.TRAIN_VAL_TEST_SPLIT[2]))
+        num_val = max(1, int(num_patients * cfg.TRAIN_VAL_TEST_SPLIT[1]))
+        num_train = max(1, num_patients - num_val - num_test)
+
+        test_ids = all_patient_ids[:num_test]
+        val_ids = all_patient_ids[num_test:num_test + num_val]
+        train_ids = all_patient_ids[num_test + num_val:]
+
+    # Print split info
     print(f"Number of patients in train: {len(train_ids)}")
     print(f"Number of patients in validation: {len(val_ids)}")
     print(f"Number of patients in test: {len(test_ids)}")
 
-    # Print split info
-    sorted_train_ids = sorted(train_ids)
-    print(f"Train IDs: {sorted_train_ids}")
-    #print(f"Validation IDs: {val_ids}")
-    sorted_validation_ids = sorted(val_ids)
-    print(f"Validation IDs: {sorted_validation_ids}")
-    #print(f"Test IDs: {test_ids}")
-    sorted_test_ids = sorted(test_ids)
-    print(f"Test IDs: {sorted_test_ids}")
+    print(f"Train IDs: {sorted(train_ids)}")
+    print(f"Validation IDs: {sorted(val_ids)}")
+    print(f"Test IDs: {sorted(test_ids)}")
 
     # Creating data lists for each split
-    train_data = [item for pid in sorted_train_ids for item in patients_data[pid]]
-    val_data = [item for pid in sorted_validation_ids for item in patients_data[pid]]
-    test_data = [item for pid in sorted_test_ids for item in patients_data[pid]]
-
-    """ when too little data, this is not working
-    # Split data into training, validation, and testing
-    train_val_data, test_data = train_test_split(patient_ids, test_size=split_ratios[2], random_state=random_seed)
-    train_data, val_data = train_test_split(train_val_data, test_size=split_ratios[1] / (split_ratios[0] + split_ratios[1]), random_state=random_seed)
-    """
+    train_data = [item for pid in train_ids for item in patients_data[pid]]
+    val_data = [item for pid in val_ids for item in patients_data[pid]]
+    test_data = [item for pid in test_ids for item in patients_data[pid]]
 
     # Initialize datasets
     train_dataset = Prostate3DDataset(train_data, transforms=train_transforms)
@@ -154,14 +176,3 @@ def get_train_val_test_Dataloaders(train_transforms, val_transforms, test_transf
     print(f"Test loader size: {len(test_loader)}")
 
     return train_loader, val_loader, test_loader
-
-"""
-# Example usage
-train_loader, val_loader, test_loader = get_train_val_test_Dataloaders(None, None, None)
-
-# Example iteration over the dataloaders
-for batch in train_loader:
-    images, labels = batch
-    print(images.shape, labels.shape)
-    break
-"""
