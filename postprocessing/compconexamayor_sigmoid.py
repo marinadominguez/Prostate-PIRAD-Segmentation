@@ -8,32 +8,17 @@ import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
-from HOSP_pipeline.preprocessing.dataset_hosp import get_train_val_test_Dataloaders  # Ensure this is the correct import
-from HOSP_pipeline.models.unet3d import UNet3D
-from HOSP_pipeline.config.config import IN_CHANNELS, CHECKPOINT_PATH, WANDB_TEST_NAME, SPLIT_SEED
-from HOSP_pipeline.utils.utils import resize_image_and_label, plot_patient_slices, plot_confusion_matrix
-from HOSP_pipeline.training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
+from ..preprocessing.dataset_hosp import get_train_val_test_Dataloaders  # Ensure this is the correct import
+from ..models.unet3d import UNet3D
+from ..config.config import IN_CHANNELS, CHECKPOINT_PATH, SPLIT_SEED, SELECTED_THRESHOLD
+from ..utils.utils import resize_image_and_label
+from ..training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
 import numpy as np
-import wandb
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, jaccard_score
 from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
-from matplotlib.colors import LogNorm
-import torch.nn.functional as F
-from HOSP_pipeline.utils.plot import visualize_slices_labels_prediction_overlap, visualize_slice_predictions
-from HOSP_pipeline.config.config import config
-from skimage.segmentation import clear_border
-from skimage.measure import label, regionprops
-from HOSP_pipeline.utils.utils import get_largest_non_edge_component, get_largest_non_near_edge_component
-
-wandb.init(project="hops_pipeline", entity="marina-dominguez", name="FineTuned-interpolated-postpr_optTh_bigger_connected_components_No100NearBorders")
-
-# Log the entire config dictionary
-wandb.config.update(config)
-
-# Now you can access it like this:
-print("Dataset path:", wandb.config.dataset_path)
-print("Number of epochs:", wandb.config.training_epoch)
-threshold_selected = 0.6062 #0.0185 #0.716 #0.147 # #0.0368 #0.202 
+from ..utils.plot import visualize_slices_labels_prediction_overlap, visualize_slice_predictions
+from ..config.config import config
+from ..utils.utils import get_largest_non_near_edge_component
+import pandas as pd
 
 # Ensure NUM_CLASSES matches the pretrained model's configuration
 PRETRAINED_NUM_CLASSES = 2  # Set to 2 equal to the number of classes in the trained model
@@ -57,15 +42,6 @@ model = UNet3D(in_channels=IN_CHANNELS, num_classes=PRETRAINED_NUM_CLASSES)
 
 # Load the state_dict from the checkpoint
 checkpoint = torch.load(CHECKPOINT_PATH, map_location=device)
-
-# Get the current model's state_dict
-#model_state_dict = model.state_dict()
-
-# Filter out mismatched keys
-#filtered_checkpoint = {k: v for k, v in checkpoint.items() if k in model_state_dict and v.size() == model_state_dict[k].size()}
-
-# Update the model's state_dict with the matching parameters
-#model_state_dict.update(filtered_checkpoint)
 
 # Load the updated state_dict into the model
 model.load_state_dict(checkpoint)#model_state_dict)
@@ -126,14 +102,7 @@ with torch.no_grad():
         prostate_probabilities = prostate_probabilities[0, 1, :, :, :]
         
         #change the threshold depending on the model 
-        predictions = (prostate_probabilities >= threshold_selected).int()
-        # 0.0185
-        # for the model trained from scratch, the threshold is 0.551
-        # for the model fine-tuned, the threshold is 0.053
-        # for the public model, the threshold is 0.863
-        # probatina con el threshold que dice ser optimo en el postprocessing 0.000000679 (mal)
-        # pre processing interpolation from scratch, threshold = 0.4409
-        # pre processing with interpolation fine-tuned, threshold = 0.01847
+        predictions = (prostate_probabilities >= SELECTED_THRESHOLD).int()
 
         print(f"prostate predictions shape: {predictions.shape}")
 
@@ -148,58 +117,33 @@ with torch.no_grad():
         for slice in range(resized_labels.shape[2]):
             if torch.any(resized_labels[0, 0, slice, :, :] > 0):
                 all_ground_truths.append(resized_labels[0, 0, slice, :, :].cpu().numpy())
-                #all_argmax_predictions.append(outputs_argmax[0, slice, :, :].cpu().numpy())
                 all_predictions.append(predictions[slice, :, :].cpu().numpy())
                 all_softmax_predictions_class1.append(outputs_sigmoid[0, 1, slice, :, :].cpu().numpy())
-            #print(f"Slice {slice} processed.") # Slice 31 processed.
-            #print("Image shape:", resized_images[0, 0, slice, :, :].shape) # Image shape: torch.Size([320, 320])
-            #print("Ground truth shape:", resized_labels[0, 0, slice, :, :].shape) # Ground truth shape: torch.Size([320, 320])
-            #print("Output shape:", outputs[0, :, slice, :, :].shape) # Output shape: torch.Size([2, 320, 320])
-            #print("Prostate probabilities shape:", outputs_softmax[0, 1, slice, :, :].shape) # Prostate probabilities shape: torch.Size([320, 320])
-            #print("Prediction shape:", outputs_argmax[0, slice, :, :].shape) # Prediction shape: torch.Size([320, 320])
-            #print("Prediction shape:", predictions.shape) # Prediction shape: torch.Size([32, 320, 320])
-            # Solo consideramos la slice si tiene alguna etiqueta diferente de fondo
-            # if torch.any(resized_labels[0, 0, slice, :, :] > 0):
                 if count_predictions < 10:
                     visualize_slice_predictions(resized_images, resized_labels, outputs, outputs_sigmoid, outputs_argmax, predictions, slice)
                     count_predictions += 1
         # Visualización para todas las slices
-        # arguments : resized_images, resized_labels, outputs, num_rows, num_cols, figsize=(10, 60)
-        #print("Visualizing all slices")
-        #print("Image shape:", resized_images[0, 0, :, :, :].shape) # Image shape: torch.Size([32, 320, 320])
-        #print("Ground truth shape:", resized_labels[0, 0, :, :, :].shape) # Ground truth shape: torch.Size([32, 320, 320])
-        #print("Output shape:", outputs_argmax[0, :, :, :].shape) # Output shape: torch.Size([32, 320, 320])
-        # print("predictions shape: ", predictions.shape) # predictions shape:  torch.Size([32, 320, 320])
         if count_overlapping_predictions < 10:
             visualize_slices_labels_prediction_overlap(resized_images, resized_labels, predictions, 32, 4, figsize=(10, 60))
             count_overlapping_predictions += 1
 
 # Convertir a numpy arrays
 all_ground_truths = np.array(all_ground_truths) # all the slices of all the patients labeled and not labeled (label column in the image)
-print(f"all_ground_truths shape: {all_ground_truths.shape}") 
-# all_ground_truths shape: (10, 320, 320)
 all_predictions = np.array(all_predictions) # all the predictions of all the slices of all the patients (prediction column in the image)
 all_softmax_predictions_class1 = np.array(all_softmax_predictions_class1) # all the softmax predictions of all the slices of all the patients (softmax for class 1 column in the 2nd image)
-print(f"all_softmax_predictions_class1 shape: {all_softmax_predictions_class1.shape}")
-print("Softmax predictions sample:", all_softmax_predictions_class1[0, :5, :5])
-# all_softmax_predictions_class1 shape: (10, 320, 320)
-#pred_flat = (all_softmax_predictions_class1.flatten() >= threshold_selected).astype(int)
-#print(f"pred_flat shape: {pred_flat.shape}") 
-# pred_flat shape: (1024000,)
+
 # Aplanar para cálculo de métricas
 gt_flat = all_ground_truths.flatten()
-print(f"gt_flat shape: {gt_flat.shape}") 
-# gt_flat shape: (1024000,)
 pred_flat = all_predictions.flatten()
 
 # Confusion matrix para obtener TP, TN, FP, FN
 tn, fp, fn, tp = confusion_matrix(gt_flat, pred_flat, labels=[0, 1]).ravel()
 
 # Métricas:
-TPR_class1 = tp / (tp + fn)  # True Positive Rate (Recall/Sensitivity) para clase 1 (próstata)
-TNR_class0 = tn / (tn + fp)  # True Negative Rate (Specificity) para clase 0 (background)
-PPV_class1 = tp / (tp + fp)  # Positive Predictive Value (Precision) para clase 1
-NPV_class0 = tn / (tn + fn)  # Negative Predictive Value para clase 0
+TPR_class1 = tp / (tp + fn)
+TNR_class0 = tn / (tn + fp)
+PPV_class1 = tp / (tp + fp)
+NPV_class0 = tn / (tn + fn)
 
 # Intersection over Union (IoU) para cada clase
 iou_class0 = tn / (tn + fp + fn)
@@ -233,10 +177,29 @@ print("Matriz de confusión:")
 print(f"TP: {tp}, FP: {fp}")
 print(f"FN: {fn}, TN: {tn}")
 
-# Crear una tabla para almacenar las métricas
-tabla_metricas_manuales = wandb.Table(columns=["TPR", "TNR", "PPV", "NPV", "IoU classe 0", "IoU classe 1", "AUC", "Umbral Optimo"])
-tabla_metricas_manuales.add_data(TPR_class1, TNR_class0, PPV_class1, NPV_class0, iou_class0, iou_class1, auc_score, optimal_threshold)
-wandb.log({"Manual Metrics": tabla_metricas_manuales})
+# Crear un diccionario con las métricas
+metrics_dict = {
+    "TPR_class1": [TPR_class1],
+    "TNR_class0": [TNR_class0],
+    "PPV_class1": [PPV_class1],
+    "NPV_class0": [NPV_class0],
+    "IoU_class0": [iou_class0],
+    "IoU_class1": [iou_class1],
+    "AUC": [auc_score],
+    "Optimal Threshold": [optimal_threshold],
+    "TP": [tp],
+    "FP": [fp],
+    "FN": [fn],
+    "TN": [tn]
+}
+
+# Crear un DataFrame con las métricas
+metrics_df = pd.DataFrame(metrics_dict)
+
+# Guardar las métricas en un archivo Excel
+metrics_filename = "output/componente_conexa_mayor_metricas.xlsx"
+metrics_df.to_excel(metrics_filename, index=False)
+
 
 # registrar la matriz de confusion como una figura
 fig, ax = plt.subplots(figsize=(6, 6))
@@ -248,49 +211,6 @@ ax.set_xticklabels(['Positive', 'Negative'])
 ax.set_yticklabels(['Positive', 'Negative'])
 ax.set_title('Confusion Matrix')
 plt.show()
-# Registrar la matriz de confusión
-wandb.log({"Confusion Matrix": wandb.Image(plt)})
+confusion_matrix_filename = "output/componente_conexa_mayor_confusion_matrix.png"
+fig.savefig(confusion_matrix_filename)
 plt.close()
-
-"""print("METRICAS DE EVALUACION ANTIGUAS")
-
-precision = precision_score(gt_flat, pred_flat, pos_label=1, average=None)
-print("Precision:", precision)
-
-iou = jaccard_score(gt_flat, pred_flat, pos_label=1, average=None)
-print("IoU (Jaccard Index):", iou)
-
-accuracy = accuracy_score(gt_flat, pred_flat)
-print("Accuracy:", accuracy)
-
-f1 = f1_score(gt_flat, pred_flat, pos_label=1, average=None)
-print("F1 Score:", f1)
-
-true_binary_labels = all_ground_truths.flatten()
-target_scores = all_softmax_predictions_class1.flatten()
-
-tpr, fpr, th = roc_curve(true_binary_labels, target_scores)
-auc_score = roc_auc_score(true_binary_labels, target_scores)
-print(f"AUC: {auc_score}")
-
-plt.figure(figsize=(10, 7))
-plt.plot(tpr, fpr, label='ROC curve (area = %0.2f)' % auc_score)
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlim([0.0, 1.05])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve')
-plt.legend(loc="lower right")
-plt.show()
-
-wandb.log({"ROC Curve": wandb.Image(plt)})
-plt.close()"""
-#print("ROC curve plotted")
-
-
-#tabla_metricas_sklearn = wandb.Table(columns=["Precision class 0", "Precision class 1", "IoU class 0", "IoU class 1", "Accuracy", "F1 Score class 0", "F1 Score class 0", "AUC", "Threshold manual"])
-#tabla_metricas_sklearn.add_data(precision[0], precision[1], iou[0], iou[1], accuracy, f1[0], f1[1], auc_score, threshold)
-#wandb.log({"Metrics": tabla_metricas_sklearn})
-
-wandb.finish()

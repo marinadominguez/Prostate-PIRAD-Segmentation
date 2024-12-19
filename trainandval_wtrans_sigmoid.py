@@ -1,29 +1,29 @@
 import sys
 import os
 
-# Add the project directory (HOSP_pipeline) to the PYTHONPATH
+# Add the project directory (.) to the PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import math
 import torch
 import matplotlib.pyplot as plt
-from HOSP_pipeline.config.config import (TRAINING_EPOCH, NUM_CLASSES, IN_CHANNELS,  
+from ..config.config import (TRAINING_EPOCH, NUM_CLASSES, IN_CHANNELS,  
                     TRAIN_CUDA, SAVE_INTERVAL, SAVE_CHECKPOINT_PATH, BACKGROUND_AS_CLASS, 
                     GAMMA, ALPHA) #, FOREGROUND_WEIGHT, DICE_WEIGHT)
                     #BCE_WEIGHTS, DICE_WEIGHT)
 # from torch.nn import CrossEntropyLoss
 #from dataset import get_train_val_test_Dataloaders
-from HOSP_pipeline.preprocessing.dataset_hosp import get_train_val_test_Dataloaders
-from HOSP_pipeline.utils.utils import resize_image_and_label
+from ..preprocessing.dataset_hosp import get_train_val_test_Dataloaders
+from ..utils.utils import resize_image_and_label
 from torch.optim import Adam
 import torch.nn.functional as F
 # from torch.utils.tensorboard import SummaryWriter
-from HOSP_pipeline.models.unet3d import UNet3D
-from HOSP_pipeline.training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
+from ..models.unet3d import UNet3D
+from ..training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
 # from torch.optim.lr_scheduler import ReduceLROnPlateau
 # from loss import BinaryFocalLoss, DiceLoss, DiceCELoss, DiceWCELoss, JaccardCELoss, JaccardWCELoss, JaccardMulticlassLoss, TverskyLoss
-from HOSP_pipeline.training.my_focal_loss import CustomFocalLoss, CustomFocalForegroundDiceLoss
-from HOSP_pipeline.config.config import config
+from ..training.my_focal_loss import CustomFocalLoss, CustomFocalForegroundDiceLoss
+from ..config.config import config
 #import segmentation_models_pytorch_3d as smp
 #from segmentation_models_pytorch.losses import FocalLoss, DiceLoss, JaccardLoss, TverskyLoss
 #from torch import nn

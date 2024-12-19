@@ -95,14 +95,17 @@ You have two main options:
 ## Requirements and Configuration
 
 - Ensure Python 3.8+ and required dependencies are installed.
-- Configure `HOSP_pipeline/config/config.py` with:
+- Configure `./config/config.py` with:
   - `DATASET_PATH` pointing to the final JSON file after preprocessing (or the cropped dataset if using the optional step).
   - Splitting parameters (`TRAIN_VAL_TEST_SPLIT`, `SPLIT_SEED`) and other training hyperparameters.
 - If preprocessing from scratch:
   - Ensure the raw DICOM data and initial JSON annotation files are accessible.
   - Adjust paths within each script or use command-line arguments or configuration files as needed.
 
-## Training the Model
+
+## Opciones de Entrenamiento
+
+### Entrenamiento desde Cero
 
 Once you have successfully generated the final dataset via the preprocessing pipeline (and optionally performed cropping), you can proceed to train your model using the provided training script. This script loads the final (and optionally cropped) dataset, sets up data augmentation transforms, and trains a 3D UNet model for prostate segmentation with your chosen loss functions and hyperparameters.
 
@@ -110,8 +113,8 @@ Once you have successfully generated the final dataset via the preprocessing pip
 
 - **Input Data**: The training script uses the final JSON file produced by the preprocessing pipeline to load the dataset via `dataset_hosp.py`.
 - **Transforms**: Before training, data augmentation or normalization transforms can be applied to the training and validation sets.
-- **Model Architecture**: A 3D UNet (`HOSP_pipeline/models/unet3d.py`) is initialized, supporting multiple input channels and output classes.
-- **Loss Functions**: Various loss functions (e.g., focal loss, dice-based losses, etc.) are supported. The script uses `CustomFocalForegroundDiceLoss` by default, defined in `HOSP_pipeline/training/my_focal_loss.py`.
+- **Model Architecture**: A 3D UNet (`./models/unet3d.py`) is initialized, supporting multiple input channels and output classes.
+- **Loss Functions**: Various loss functions (e.g., focal loss, dice-based losses, etc.) are supported. The script uses `CustomFocalForegroundDiceLoss` by default, defined in `./training/my_focal_loss.py`.
 - **CUDA Support**: If CUDA is available and `TRAIN_CUDA` is set, training will occur on the GPU. Otherwise, the script falls back to CPU mode.
 - **Logging & Visualization**: The script logs training and validation losses, prints foreground coverage statistics, and can optionally visualize intermediate outputs to ensure model predictions are as expected.
 - **Checkpoints & Early Stopping**: Model weights are saved periodically (at defined intervals or when a new best validation loss is found). Early stopping criteria can be configured to halt training if no improvement is observed after a certain number of epochs.
@@ -122,7 +125,7 @@ Once you have successfully generated the final dataset via the preprocessing pip
    Make sure you have the final JSON dataset file ready. 
 
 2. **Update `config.py`**:  
-   Make sure that `HOSP_pipeline/config/config.py` points to the correct `DATASET_PATH`, batch sizes, number of epochs, and other parameters matching your hardware and training preferences.
+   Make sure that `./config/config.py` points to the correct `DATASET_PATH`, batch sizes, number of epochs, and other parameters matching your hardware and training preferences.
 
 3. **Run the Training Script**:  
    From the project’s main directory:
@@ -143,6 +146,59 @@ Once you have successfully generated the final dataset via the preprocessing pip
 5. **Early Stopping and Best Models**:  
    If early stopping is enabled and triggered, training will stop early if no improvement is observed. The best validation model will remain saved as a checkpoint. Use this model checkpoint to evaluate on test sets, refine further, or deploy in applications.
 
+
+### Fine-Tuning de un Modelo Pre-entrenado
+Además del entrenamiento desde cero, también existe la opción de realizar **fine-tuning** de un modelo ya pre-entrenado. Esto resulta útil cuando:
+
+- Ya cuentas con un modelo base entrenado sobre un conjunto de datos o anotaciones similares.
+- Quieres ajustar el modelo a un nuevo conjunto de datos ligeramente diferente (por ejemplo, datos de otro centro hospitalario o con distintas características de imagen).
+- Deseas mejorar el rendimiento del modelo pre-entrenado con menos esfuerzo computacional que entrenar desde cero.
+
+**Puntos Clave del Fine-Tuning:**
+
+- El script de fine-tuning carga un modelo pre-entrenado usando `model.load_state_dict(torch.load(CHECKPOINT_PATH))`.
+- Se “congelan” (freeze) las capas que no se quieran re-entrenar, típicamente las capas iniciales (encoder) y se dejan entrenables las capas de la ruta de síntesis (decodificador o up-convoluciones).
+- Se utiliza un *learning rate* más pequeño y un número de épocas menor que en el entrenamiento desde cero, ya que sólo se refinan ciertos pesos.
+- Se aprovechan las transformaciones, el dataloader y las funciones de pérdida definidas anteriormente, adaptadas para el *fine-tuning*.
+- Una vez finalizado el proceso, se guarda el modelo afinado.
+
+Para ejecutar el *fine-tuning*:
+
+1. Asegúrate de tener un checkpoint (`CHECKPOINT_PATH`) de un modelo previamente entrenado.
+2. Configura el script de *fine-tuning* con las rutas correctas en `config.py`.
+3. Ejecuta el script de *fine-tuning*, que entrenará sólo las capas seleccionadas, adaptando el modelo al nuevo conjunto de datos.
+
+## Postprocesamiento: Extracción de la Mayor Componente Conexa
+
+Después de haber entrenado tu modelo (ya sea desde cero o mediante *fine-tuning*), es posible que desees aplicar una etapa de postprocesamiento antes de pasar a la evaluación.
+
+**Opción de Postprocesamiento: Componente Conexa Mayor**
+
+- Algunas máscaras resultantes pueden presentar ruido, pequeños grupos de píxeles aislados o discontinuidades.
+- Aplicar una extracción de la **mayor componente conexa** permite filtrar las regiones ruidosas y quedarte únicamente con la mayor área conectada que, típicamente, corresponde mejor a la estructura anatómica objetivo (por ejemplo, la próstata).
+  
+**Funcionamiento:**
+
+- El script de postprocesamiento carga el modelo entrenado y hace inferencia sobre el conjunto de prueba.
+- Para cada slice inferido, aplica una función que identifica la componente conexa más grande (excluyendo píxeles cercanos al borde si así se configura).
+- Genera métricas (AUC, IoU, sensibilidad, especificidad, etc.) y las guarda en un archivo Excel.
+- También produce una matriz de confusión y puede generar visualizaciones.
+
+**Pasos para el Postprocesamiento:**
+
+1. Asegúrate de tener tu modelo entrenado y el conjunto de prueba listo.
+2. Ejecuta el script de postprocesamiento para inferir las máscaras y extraer la mayor componente conexa.
+```bash
+pyhton postprocessing/compconexamayor_sigmoid.py
+```
+3. Observa las métricas resultantes y las visualizaciones generadas en el directorio de salida (`output/`).
+
+
+**Próximos Pasos:**
+
+- Con el dataset preprocesado, el modelo entrenado y, opcionalmente, ajustado con *fine-tuning*, y habiendo aplicado el postprocesamiento, estarás listo para realizar una evaluación más robusta.
+- Ajusta la configuración en `config.py` y en los scripts según tus necesidades (por ejemplo, umbrales, número de épocas, parámetros del postprocesamiento).
+- Repite el ciclo entrenando, afinando y evaluando el modelo hasta obtener el rendimiento deseado.
 
 
 ## Usage

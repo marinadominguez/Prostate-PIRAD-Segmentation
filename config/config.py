@@ -30,7 +30,6 @@ ALPHA = 0.7 #0.25
 CHECKPOINT_PATH = "checkpoints/interpolation_preprocess/trained_from_scratch_cancer_lessions_wcropping/best_model_epoch90.pt"
 PROSTATE_CHECKPOINT = "checkpoints/correct_interpolation/trained_from_scratch_customfocalloss_alpha0.7/best_model_epoch93.pt"
 SAVE_CHECKPOINT_PATH = 'checkpoints/interpolation_preprocess/trained_from_scratch_cancer_lessions_wcropping'
-WANDB_TRAIN_NAME = 'Unet3d_CustomFocalLoss_100Epochs'
 
 ############################# ------- TRAINING CONFIGURATIONS ------- #######################################
 TRAIN_VAL_TEST_SPLIT = [0.8, 0.15, 0.05] # [0.0, 0.0, 1.0]
@@ -47,7 +46,7 @@ VAL_PATIENTS_IDS = ['1829ed05901f123', 'b29059098a4102f']
 
 ########################### ------- TESTING CONFIGURATIONS ------- ########################################
 TEST_BATCH_SIZE = 1
-WANDB_TEST_NAME = "DiceLoss-Class4"
+SELECTED_THRESHOLD = 0.202
 # CHECKPOINT_PATH = "checkpoints/train&val_weights/FocalLoss_100Epochs/best_model_epoch99.pt"
 # BCE_WEIGHTS = [0.0001, 0.249, 0.289, 0.2119, 0.25]
 # DICE_WEIGHT = 0.5
@@ -78,7 +77,5 @@ config = {
     "train_cuda": TRAIN_CUDA,
     "save_interval": SAVE_INTERVAL,
     "test_batch_size": TEST_BATCH_SIZE,
-    "wandb_test_name": WANDB_TEST_NAME,
-    "wandb_train_name": WANDB_TRAIN_NAME,
     "save_checkpoint_path": SAVE_CHECKPOINT_PATH
 }
