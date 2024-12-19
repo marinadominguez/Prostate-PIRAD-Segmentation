@@ -16,7 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-combined_annotated_prostates = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_PIRAD3.json'
+combined_annotated_prostates = 'dataset/combined_annotated_PIRAD3.json'
 
 def check_file_exists(filepath):
     """
@@ -55,7 +55,7 @@ def plot_histogram(df):
     plt.xlabel('Número de slices etiquetadas')
     plt.ylabel('Número de pacientes')
     plt.show()
-    plt.savefig('/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/PIRAD3/histogram_labeled_slices_december.png')
+    plt.savefig('dataset/PIRAD3/histogram_labeled_slices_december.png')
     plt.close()
 
 def unique_patient_count(data):
@@ -119,7 +119,7 @@ def main():
     annotated_slices = count_annotated_slices(data)
     
     # Save results to JSON
-    save_to_json(annotated_slices, '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/PIRAD3/annotated_slices_per_patient_december.json')
+    save_to_json(annotated_slices, 'dataset/PIRAD3/annotated_slices_per_patient_december.json')
 
 if __name__ == "__main__":
     main()

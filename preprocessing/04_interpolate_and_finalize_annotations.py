@@ -18,9 +18,9 @@ from scipy.ndimage import distance_transform_edt
 
 
 # Load the combined dataset
-combined_dataset_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_PIRAD3.json'
+combined_dataset_path = 'dataset/combined_annotated_PIRAD3.json'
 # Load the annotated_slices_per_patient 
-annotated_slices_per_patient_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/PIRAD3/annotated_slices_per_patient_december.json'
+annotated_slices_per_patient_path = 'dataset/PIRAD3/annotated_slices_per_patient_december.json'
 
 # Load the data
 with open(combined_dataset_path, 'r') as f:
@@ -279,7 +279,7 @@ print("Saving the filtered data in the specified output path as a JSON file...")
 flat_interpolated_data = flatten_interpolated_data(interpolated_patients_data)
 
 # Save the flattened data
-output_path = f'/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/preprocessing/interpolated_ALL_annotated_PIRAD3_december_minannot{min_annotations}_maxgap{max_allowed_gap}.json'
+output_path = f'preprocessing/interpolated_ALL_annotated_PIRAD3_december_minannot{min_annotations}_maxgap{max_allowed_gap}.json'
 print(f"Saving the high density interpolated data to {output_path}...")
 with open(output_path, 'w') as f:
     json.dump(flat_interpolated_data, f)

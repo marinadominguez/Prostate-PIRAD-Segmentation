@@ -12,11 +12,11 @@ import ast
 import pandas as pd
 
 # Define the file names
-input_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/finalversiondata.json'
-dicom_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/dicoms_december.json'
+input_file = 'dataset/13_12_2024_finalversion/finalversiondata.json'
+dicom_file = 'dataset/dicoms_december.json'
 
-output_json_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.json'
-output_excel_file = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.xlsx'
+output_json_file = 'dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.json'
+output_excel_file = 'dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.xlsx'
 
 # Check if the input file exists
 if not os.path.exists(input_file) or not os.path.exists(dicom_file):

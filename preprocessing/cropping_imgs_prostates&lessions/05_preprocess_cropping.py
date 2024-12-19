@@ -9,26 +9,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from HOSP_pipeline.preprocessing.dataset_hosp import get_train_val_test_Dataloaders
 from HOSP_pipeline.models.unet3d import UNet3D
-from HOSP_pipeline.config.config import IN_CHANNELS, CHECKPOINT_PATH, WANDB_TEST_NAME, SPLIT_SEED, ALPHA, TEST_PATIENT_IDS, PROSTATE_CHECKPOINT
-from HOSP_pipeline.utils.utils import resize_image_and_label, plot_patient_slices, plot_confusion_matrix
+from HOSP_pipeline.config.config import IN_CHANNELS, TEST_PATIENT_IDS, PROSTATE_CHECKPOINT
+from HOSP_pipeline.utils.utils import resize_image_and_label
 from HOSP_pipeline.training.transforms import (train_transform, train_transform_cuda, val_transform, val_transform_cuda)
 import numpy as np
-import random
-import wandb
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, jaccard_score
-from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
-from matplotlib.colors import LogNorm
-import torch.nn.functional as F
-from HOSP_pipeline.utils.plot import visualize_slices_labels_prediction_overlap, visualize_slice_predictions
-from HOSP_pipeline.config.config import config
-from scipy.spatial.distance import directed_hausdorff
-from skimage.measure import label, find_contours
-from skimage import segmentation
+
+from skimage.measure import label
 from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
-from skimage.draw import polygon
 from PIL import Image
-
 import json
 import pydicom
 
@@ -36,7 +25,7 @@ PRETRAINED_NUM_CLASSES = 2  # Asegúrate de que coincide con el modelo entrenado
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Ruta al archivo JSON con las anotaciones de las lesiones
-annotations_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/preprocessing/interpolation_preprocess/interpolated_ALL_annotated_cancer_december_minannot1_maxgap6.json'
+annotations_path = 'preprocessing/interpolation_preprocess/interpolated_ALL_annotated_cancer_december_minannot1_maxgap6.json'
 
 # Cargar las anotaciones
 with open(annotations_path, 'r') as f:
@@ -162,8 +151,8 @@ print("Test dataloader length:", len(test_dataloader))
 # i have set the split to 0, 0, 1, so i only have test, because i want to apply this in the whole new lessions dataset
 
 # Directorios para guardar las imágenes y etiquetas recortadas
-cropped_image_dir = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/cropped_imgs/images' 
-cropped_label_dir = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/cropped_imgs/labels'  
+cropped_image_dir = 'dataset/cropped_imgs/images' 
+cropped_label_dir = 'dataset/cropped_imgs/labels'  
 os.makedirs(cropped_image_dir, exist_ok=True)
 os.makedirs(cropped_label_dir, exist_ok=True)
 
@@ -291,7 +280,7 @@ with torch.no_grad():
 
                     plt.tight_layout()
                     # Guardar la visualización
-                    plt.savefig(f'/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/cropped_imgs/visualization/visualization_{folder_id}_slice{slice_num}.png')
+                    plt.savefig(f'dataset/cropped_imgs/visualization/visualization_{folder_id}_slice{slice_num}.png')
                     plt.close()
 
                     count_visualize_overlap += 1
@@ -301,7 +290,7 @@ with torch.no_grad():
             continue  # Pasamos al siguiente paciente
     
     # Guardar las nuevas anotaciones
-    new_annotations_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/preprocessing/cropping_imgs_prostates&lessions/nuevas_anotaciones_recortadas.json'
+    new_annotations_path = 'preprocessing/cropping_imgs_prostates&lessions/nuevas_anotaciones_recortadas.json'
     with open(new_annotations_path, 'w') as f:
         json.dump(new_annotations, f)
 

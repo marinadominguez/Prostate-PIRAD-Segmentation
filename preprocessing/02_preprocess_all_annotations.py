@@ -236,9 +236,9 @@ def process_all_patients(unfiltered_json_path, excel_path, dicom_base_dir, outpu
 
 
 # ----------------------------- Define paths and process all patients -----------------------------
-unfiltered_json_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/24_10_2024/all_annotated_patients_october_2024.json'
-excel_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/24_10_2024/all_annotated_patients_october_2024.xlsx'
+unfiltered_json_path = 'dataset/24_10_2024/all_annotated_patients_october_2024.json'
+excel_path = 'dataset/24_10_2024/all_annotated_patients_october_2024.xlsx'
 dicom_base_dir = BASE_PATH
-output_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/multiclass_oct/all_annotations_october.json'
+output_path = 'dataset/multiclass_oct/all_annotations_october.json'
 
 process_all_patients(unfiltered_json_path, excel_path, dicom_base_dir, output_path)

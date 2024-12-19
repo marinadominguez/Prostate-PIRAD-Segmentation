@@ -300,9 +300,9 @@ def process_all_patients(unfiltered_json_path, excel_path, dicom_base_dir, outpu
 
 # ------------------------------- Define paths and process all patients -------------------------------
 
-unfiltered_json_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.json'
-excel_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.xlsx'
+unfiltered_json_path = 'dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.json'
+excel_path = 'dataset/13_12_2024_finalversion/all_annotated_patients_december_2024.xlsx'
 dicom_base_dir = '/ssds/DATA/Prostate/MRI/FILTERED_HOSP'
-output_path = '/home/marina/Escritorio/Task05_Prostate/HOSP_pipeline/dataset/combined_annotated_PIRAD3.json'
+output_path = 'dataset/combined_annotated_PIRAD3.json'
 
 process_all_patients(unfiltered_json_path, excel_path, dicom_base_dir, output_path)
