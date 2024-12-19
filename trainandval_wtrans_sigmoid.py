@@ -6,7 +6,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import math
 import torch
-import wandb
 import matplotlib.pyplot as plt
 from HOSP_pipeline.config.config import (TRAINING_EPOCH, NUM_CLASSES, IN_CHANNELS,  
                     TRAIN_CUDA, SAVE_INTERVAL, SAVE_CHECKPOINT_PATH, BACKGROUND_AS_CLASS, 
@@ -45,14 +44,6 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 # select the device to be used for training: CUDA_VISIBLE_DEVICES=1
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
-# Initialize W&B
-wandb.init(project="hops_pipeline", entity="marina-dominguez", name=f'UNet3D_{TRAINING_EPOCH}Epochs_{IN_CHANNELS}Channels_{NUM_CLASSES}Classes_{ALPHA}alphaCustomFocal_0weightDice_0ForegrWeight_{SAVE_CHECKPOINT_PATH.split("/")[-1]}')
-# Log the entire config dictionary
-wandb.config.update(config)
-# Now you can access it like this:
-print("Dataset path:", wandb.config.dataset_path)
-print("Number of epochs:", wandb.config.training_epoch)
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 if BACKGROUND_AS_CLASS: NUM_CLASSES += 1
@@ -73,37 +64,11 @@ if torch.cuda.is_available() and TRAIN_CUDA:
     # Usage in your training script
     #criterion = CustomFocalLoss(alpha=0.25, gamma=2.0, reduction='mean').cuda()
     criterion = CustomFocalForegroundDiceLoss(alpha=ALPHA, gamma=GAMMA, reduction='mean').cuda()#, dice_weight=DICE_WEIGHT, foreground_weight=FOREGROUND_WEIGHT).cuda()
-    
-    # criterion = BinaryFocalLoss().cuda()
-    # criterion = FocalLoss(gamma=2, alpha=0.25).cuda()
-    # criterion = CrossEntropyLoss(weight=torch.Tensor(BCE_WEIGHTS).cuda())
-    # criterion = DiceLoss().cuda()
-    # criterion = JaccardMulticlassLoss().cuda()
-    # criterion = TverskyLoss().cuda()
-    # criterion = FocalLoss(gamma=2, alpha=0.25).cuda()
-    # criterion = JaccardWCELoss(num_classes=NUM_CLASSES).cuda()
-    # criterion = DiceCELoss(num_classes=NUM_CLASSES, dice_weight=DICE_WEIGHT).cuda()
-    # criterion = JaccardCELoss(num_classes=NUM_CLASSES).cuda()
+
     print('cuda available! Training initialized on gpu ...')
 
 elif not torch.cuda.is_available() and TRAIN_CUDA:
-    #criterion = CustomFocalLoss(alpha=0.25, gamma=2.0, reduction='mean')
     criterion = CustomFocalForegroundDiceLoss(alpha=ALPHA, gamma=GAMMA, reduction='mean') #, dice_weight=DICE_WEIGHT, foreground_weight=FOREGROUND_WEIGHT)
-    # criterion = CrossEntropyLoss(weight=torch.Tensor(BCE_WEIGHTS))
-    # criterion = DiceLoss()
-    # criterion = JaccardMulticlassLoss()
-    #criterion = DiceWCELoss(weight=torch.Tensor(BCE_WEIGHTS))
-    # criterion = TverskyLoss()
-    # criterion = FocalLoss(gamma=2, alpha=0.25)
-    # criterion = BinaryFocalLoss()
-
-    #criterion = FocalLoss(gamma=0.7)
-    # To make it behaves as CrossEntropy loss
-    # criterion = FocalLoss(gamma=0)
-
-    # criterion = JaccardWCELoss(num_classes=NUM_CLASSES)
-    # criterion = DiceCELoss(num_classes=NUM_CLASSES, dice_weight=DICE_WEIGHT)
-    # criterion = JaccardCELoss(num_classes=NUM_CLASSES)
     train_transforms = train_transform
     val_transforms = val_transform
     print('cuda not available! Training initialized on cpu ...')
@@ -158,14 +123,11 @@ for epoch in range(TRAINING_EPOCH):
         ground_truth = ground_truth.long() # torch.Size([1, 1, 32, 320, 320]) = [batch_size, 1, depth, height, width]
         print(f"Ground truth shape: {ground_truth.shape}")
         print(f"Unique values in ground truth: {torch.unique(ground_truth)}")
-
-        #image = image.half()
-        #model = model.half()  # Convert model to half precision
         
         optimizer.zero_grad()
 
         output = model(image)
-        print(f"Output shape: {output.shape}")
+        print(f"Output shape: {output.shape}") # torch.Size([1, 2, 32, 320, 320])
         print(f"Range of values in output: {output.min()} - {output.max()}")
         # make the labels occupy less memory
         del image
@@ -197,10 +159,9 @@ for epoch in range(TRAINING_EPOCH):
             fig.colorbar(img, cax=axs[-1], orientation='vertical')
             axs[-1].set_title('Pixel\nRange')
             plt.tight_layout()
-            # Guardar la trama en wandb
-            wandb.log({"Predicted Label Map": [wandb.Image(plt, caption="Predicted Label Map")]})
-            print("Visualization of the predicted label maps in wandb")
-            # Cerrar la trama
+            # Guarda en output/training_outputs
+            plt.savefig(f"output/training_outputs/epoch_{epoch}_batch_{i}_output.png")
+            print("Visualization of the predicted label maps saved in output/training_outputs")
             plt.close()
         #####################################################################################################################################
         # apply sigmoid to the output of the model
@@ -216,14 +177,14 @@ for epoch in range(TRAINING_EPOCH):
         loss = criterion(output, one_hot_gt)
 
         print('Loss: ', loss)
-        # wandb.log({"Loss": loss})
 
         # Separate foreground and background Dice
         background_mask = (ground_truth == 0).float()
         foreground_mask = (ground_truth == 1).float()
 
-        dice_background = dice_coef(output, background_mask)
-        dice_foreground = dice_coef(output, foreground_mask)
+        dice_background = dice_coef(output[:, 0, :, :, :], background_mask)
+        dice_foreground = dice_coef(output[:, 1, :, :, :], foreground_mask)
+
 
         print(f"Dice Foreground: {dice_foreground}")
         print(f"Dice Background: {dice_background}")
@@ -244,23 +205,17 @@ for epoch in range(TRAINING_EPOCH):
     # Calculate the average training loss for the current epoch
     avg_train_loss = train_loss / len(train_dataloader)
 
-    # Log the average training loss to W&B
-    wandb.log({"Avg Train Loss": avg_train_loss})
     print(f"Average training loss: {avg_train_loss}")
 
     # calculate the average dice coefficient for the current epoch
     avg_dice_foreground = train_dice_foreground / len(train_dataloader)
     avg_dice_background = train_dice_background / len(train_dataloader)
 
-    # Log the average dice coefficient to W&B
-    wandb.log({"Avg Dice Foreground": avg_dice_foreground})
     print(f"Average Dice Foreground: {avg_dice_foreground}")
-    wandb.log({"Avg Dice Background": avg_dice_background})
     print(f"Average Dice Background: {avg_dice_background}")
 
     # Log the average foreground coverage to W&B
     avg_foreground_coverage = total_foreground_coverage / len(train_dataloader)
-    wandb.log({"Avg Foreground Coverage": avg_foreground_coverage})
     print(f"Average Foreground Coverage: {avg_foreground_coverage}")
 
     ## -------------------------------------- Validation phase ---------------------------------------------
@@ -270,19 +225,15 @@ for epoch in range(TRAINING_EPOCH):
         val_loss = 0.0
         val_dice_foreground = 0.0
         val_dice_background = 0.0
-        for data in val_dataloader:  # iterate over validation data
-            image = data[0].to(device) #torch.Size([1, 1, 20, 256, 256])
-            ground_truth = data[1].to(device) # torch.Size([1, 1, 20, 256, 256])
+        for data in val_dataloader: 
+            image = data[0].to(device)
+            ground_truth = data[1].to(device)
 
             image, ground_truth = resize_image_and_label(image, ground_truth) 
             
-            image = image.float() # torch.Size([1, 1, 32, 320, 320])
+            image = image.float()
 
             ground_truth = ground_truth.long()
-            # torch.Size([1, 1, 32, 320, 320])
-
-            # image = image.half()
-            # model = model.half()  # Convert model to half precision
 
             output = model(image)
             print(f"The values in the output of the model are in the range: {output.min()} - {output.max()}")
@@ -290,13 +241,11 @@ for epoch in range(TRAINING_EPOCH):
             # Visualization of the output of the model after softmax, the predicted label map for each class (in each channel)
             if epoch % 20 == 0 and i == 0: # visualize only the first image of the first batch
                 if output.max() > 1 and output.min() <= 0:
-                    #softmax_output = F.softmax(output, dim=1)
                     sigmoid_output = F.sigmoid(output)
                     print(f"Applied the softmax for the output of image {i} in epoch {epoch}")
                     print(f"sigmoid_output shape: {sigmoid_output.shape}")
                 else:
                     print(f"Output of image {i} in epoch {epoch} is already in the form of probabilities")
-                    #softmax_output = output
                     sigmoid_output = output
                     print(f"sigmoid_output shape: {sigmoid_output.shape}")
                 fig, axs = plt.subplots(1, sigmoid_output.shape[1] + 1, figsize=(25, 5), gridspec_kw={'width_ratios': [1] * sigmoid_output.shape[1] + [0.05]})
@@ -310,9 +259,9 @@ for epoch in range(TRAINING_EPOCH):
                 axs[-1].set_title('Pixel\nRange')
                 plt.tight_layout()
                 
-                # Guardar la trama en wandb
-                wandb.log({"ValidationSet Predicted Label Map": [wandb.Image(plt, caption="Predicted Label Map")]})
-                print("Visualization of the predicted label maps in the validation set for each channel in wandb")
+                # Guarda en output/validation_outputs
+                plt.savefig(f"output/validation_outputs/epoch_{epoch}_batch_{i}_output.png")
+                print("Visualization of the predicted label maps in the validation set for each channel in output/validation_outputs")
                 
                 # Cerrar la trama
                 plt.close()
@@ -323,21 +272,19 @@ for epoch in range(TRAINING_EPOCH):
             print(f"Range of values in output after sigmoid: {output.min()} - {output.max()}")
             
             print("get same shape for the ground truth as the output of the model")
-            #print(f"Ground truth shape: {ground_truth.shape}")
-            ground_truth = ground_truth.squeeze(1) # torch.Size([1, 32, 320, 320])
+            ground_truth = ground_truth.squeeze(1) 
             one_hot_gt = F.one_hot(ground_truth, NUM_CLASSES).permute(0, 4, 1, 2, 3).float()
             print(f"Ground truth shape: {one_hot_gt.shape}")   
               
             loss = criterion(output, one_hot_gt)
             print('Validation Loss: ', loss)
-            # wandb.log({"Eval Loss": loss.item()})
 
             # Calculate Dice for foreground and background
             background_mask = (ground_truth == 0).float()
             foreground_mask = (ground_truth == 1).float()
 
-            dice_background = dice_coef(output, background_mask)
-            dice_foreground = dice_coef(output, foreground_mask)
+            dice_background = dice_coef(output[:, 0, :, :, :], background_mask)
+            dice_foreground = dice_coef(output[:, 1, :, :, :], foreground_mask)
 
             print(f"Dice Foreground: {dice_foreground}")
             print(f"Dice Background: {dice_background}")
@@ -347,14 +294,11 @@ for epoch in range(TRAINING_EPOCH):
             val_dice_background += dice_background.item()
     
     avg_val_loss = val_loss / len(val_dataloader)
-    wandb.log({"Avg Val Loss": avg_val_loss})
     print(f"Average validation loss: {avg_val_loss}")
 
     avg_val_dice_foreground = val_dice_foreground / len(val_dataloader)
     avg_val_dice_background = val_dice_background / len(val_dataloader)
-    wandb.log({"Avg Val Dice Foreground": avg_val_dice_foreground})
     print(f"Average validation dice foreground: {avg_val_dice_foreground}")
-    wandb.log({"Avg Val Dice Background": avg_val_dice_background})
     print(f"Average validation dice background: {avg_val_dice_background}")
 
     ## ------------------------------------- Checkpointing ------------------------------------------------
@@ -367,22 +311,16 @@ for epoch in range(TRAINING_EPOCH):
         best_model_path = f'{SAVE_CHECKPOINT_PATH}/best_model_epoch{epoch}.pt'
         torch.save(model.state_dict(), best_model_path)
         print(f"Model saved to {best_model_path} at epoch {epoch}")
-        #wandb.save(best_model_path)
         epochs_since_improvement = 0  # resetear contador
     else: # nunca se cumple el else porque siempre se guarda el modelo cada 10 épocas y se resetea el contador
         epochs_since_improvement += 1
         print(f"No improvement in validation loss for {epochs_since_improvement} epochs")
     
-    # Learning Rate Scheduling
-    # scheduler.step(avg_val_loss)
-
     # Early Stopping
     if epochs_since_improvement == early_stopping_patience:
         print(f'Early stopping triggered after {epoch} epochs!')
         break
     if avg_val_loss - best_val_loss < 0.00001 and epochs_since_improvement > early_stopping_patience-1:
-        # aquí lo miso, tampoco entra nunca porque se resetea el contador cada 10 épocas
+        # tampoco entra nunca porque se resetea el contador cada 10 épocas
         print(f'Early stopping triggered after {epoch} epochs!')
         break
-
-wandb.finish()

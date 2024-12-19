@@ -28,11 +28,11 @@ To run this project, you need:
 
 3. Add your data to the data/ directory (not included in this repository for privacy).
 
-# Preprocessing Pipeline for Prostate MRI Data
+## Preprocessing Pipeline for Prostate MRI Data
 
 This directory provides a comprehensive preprocessing pipeline for transforming raw DICOM images and corresponding segmentation annotations into a finalized dataset ready for deep learning model training. The pipeline includes scripts for filtering patients, extracting annotations, handling multiple annotation strategies (single-label, multi-label, or merged-label), interpolating missing slices, and optionally cropping images around the prostate region and lesions.
 
-## Overview
+### Overview
 
 ### Goals of the Preprocessing Pipeline
 - **Filter & Extract:** Identify relevant patients and remove those without any annotations.
@@ -101,6 +101,49 @@ You have two main options:
 - If preprocessing from scratch:
   - Ensure the raw DICOM data and initial JSON annotation files are accessible.
   - Adjust paths within each script or use command-line arguments or configuration files as needed.
+
+## Training the Model
+
+Once you have successfully generated the final dataset via the preprocessing pipeline (and optionally performed cropping), you can proceed to train your model using the provided training script. This script loads the final (and optionally cropped) dataset, sets up data augmentation transforms, and trains a 3D UNet model for prostate segmentation with your chosen loss functions and hyperparameters.
+
+**Key Points:**
+
+- **Input Data**: The training script uses the final JSON file produced by the preprocessing pipeline to load the dataset via `dataset_hosp.py`.
+- **Transforms**: Before training, data augmentation or normalization transforms can be applied to the training and validation sets.
+- **Model Architecture**: A 3D UNet (`HOSP_pipeline/models/unet3d.py`) is initialized, supporting multiple input channels and output classes.
+- **Loss Functions**: Various loss functions (e.g., focal loss, dice-based losses, etc.) are supported. The script uses `CustomFocalForegroundDiceLoss` by default, defined in `HOSP_pipeline/training/my_focal_loss.py`.
+- **CUDA Support**: If CUDA is available and `TRAIN_CUDA` is set, training will occur on the GPU. Otherwise, the script falls back to CPU mode.
+- **Logging & Visualization**: The script logs training and validation losses, prints foreground coverage statistics, and can optionally visualize intermediate outputs to ensure model predictions are as expected.
+- **Checkpoints & Early Stopping**: Model weights are saved periodically (at defined intervals or when a new best validation loss is found). Early stopping criteria can be configured to halt training if no improvement is observed after a certain number of epochs.
+
+### Steps to Run the Training
+
+1. **Ensure Preprocessing Completed**:  
+   Make sure you have the final JSON dataset file ready. 
+
+2. **Update `config.py`**:  
+   Make sure that `HOSP_pipeline/config/config.py` points to the correct `DATASET_PATH`, batch sizes, number of epochs, and other parameters matching your hardware and training preferences.
+
+3. **Run the Training Script**:  
+   From the project’s main directory:
+   ```bash
+   python trainandval_wtrans_sigmoid.py
+   ```
+
+   This will:
+   - Load the dataset via `get_train_val_test_Dataloaders()` using the paths and parameters defined in `config.py`.
+   - Initialize the model, optimizer, and loss function.
+   - Run the training loop for the specified number of epochs, saving checkpoints and printing out performance metrics.
+
+4. **Monitor Results**:  
+   Check the console output for training and validation losses, dice scores, and foreground coverage metrics.  
+   
+   The script saves model checkpoints at `SAVE_CHECKPOINT_PATH` (defined in `config.py`) and can save diagnostic images under `output/training_outputs` and `output/validation_outputs` directories for visualization.
+
+5. **Early Stopping and Best Models**:  
+   If early stopping is enabled and triggered, training will stop early if no improvement is observed. The best validation model will remain saved as a checkpoint. Use this model checkpoint to evaluate on test sets, refine further, or deploy in applications.
+
+
 
 ## Usage
 
