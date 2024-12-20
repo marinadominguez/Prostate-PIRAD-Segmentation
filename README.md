@@ -40,7 +40,7 @@ Se busca desarrollar un sistema que, a partir de imágenes multiparamétricas de
    - Para los recortes de la región de interés de la próstata, crea una carpeta `data` donde se guarden las imágenes recortadas para hacer la segmentación en 2D.
    - Además, las imágenes generadas y las tablas de Excel con resultados se almacenan en `output`, mientras que los modelos entrenados se guardan en `checkpoints`.
 
-## Preprocesamiento de Datos de RMN Prostática
+## Preprocesamiento de Datos de RM Prostática
 
 Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Además, los outputs generados por cada uno son necesarios para el siguiente paso, funcionando como una cascada. Es crucial ejecutar cada etapa en orden para asegurar un correcto preprocesamiento de los datos.
 
@@ -98,7 +98,7 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    python trainandval_wtrans_sigmoid.py
    ```
 
-3. **Fine-Tuning:** Carga pesos pre-entrenados y ejecuta el script:
+3. **Fine-Tuning:** Carga pesos pre-entrenados cambiando la ruta en la configuración y ejecuta el script:
 
    ```bash
    python fine_tuning.py
