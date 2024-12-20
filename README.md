@@ -260,8 +260,6 @@ Mientras no se disponga de datos 3D suficientes para lesiones, se ha incluido el
   - Entrenamiento con una UNet 2D.
   - Evaluación con métricas finales.
 
-- También se proporciona un modelo preentrenado (`unet-model-unfrozen.pth`) que surge de este notebook.  De esta manera, no es necesario reentrenar desde cero si quieres revisar rápidamente resultados o realizar pruebas.
-
 ## Futuras Extensiones
 
 Actualmente, el pipeline se centra en la segmentación prostática. Sin embargo, está previsto entrenar la misma arquitectura (UNet3D) para la detección y segmentación de lesiones. Una vez que se disponga de más datos anotados para lesiones, podrás:
@@ -281,4 +279,3 @@ Actualmente, el pipeline se centra en la segmentación prostática. Sin embargo,
 
 - El pipeline actual es extensible para la segmentación de lesiones.
 - Con más datos, podrás entrenar la UNet3D para lesiones y evaluar con los scripts dentro de `future_work`.
-- Mientras tanto, el notebook 2D demuestra el flujo de trabajo y proporciona un modelo ya entrenado como referencia.
