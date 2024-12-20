@@ -11,7 +11,8 @@ Se busca desarrollar un sistema que, a partir de imágenes multiparamétricas de
 - Pipeline completo de segmentación.
 - Scripts para entrenamiento y evaluación.
 
-(Meter aquí la imagen de la pipeline)
+![Pipeline](readme_imgs/pipeline.png)
+
 
 ## Requisitos
 
