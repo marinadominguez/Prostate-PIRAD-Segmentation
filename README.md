@@ -59,12 +59,9 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
      python 02_preprocess_all_annotations.py
      ```
 
-   - Procesar solo una categoría específica:
+   - Procesar solo una categoría específica (próstata, PIRAD3, PIRAD4 o PIRAD5):
      ```bash
-     python 02_preprocess_one_annotation.py --annotation prostata
-     python 02_preprocess_one_annotation.py --annotation PIRAD3
-     python 02_preprocess_one_annotation.py --annotation PIRAD4
-     python 02_preprocess_one_annotation.py --annotation PIRAD5
+     python 02_preprocess_one_annotation.py
      ```
 
    - Combinar múltiples etiquetas en una sola (por ejemplo, fusionar PIRADS 4 y 5 como 'cáncer'):
