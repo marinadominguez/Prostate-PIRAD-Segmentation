@@ -44,7 +44,7 @@ Se busca desarrollar un sistema que, a partir de imágenes multiparamétricas de
 
 Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Además, los outputs generados por cada uno son necesarios para el siguiente paso, funcionando como una cascada. Es crucial ejecutar cada etapa en orden para asegurar un correcto preprocesamiento de los datos.
 
-1. **Filtrado y Extracción:**
+1. **Filtrado y Extracción:** Filtra los pacientes sin anotaciones y crea un resumen en excel y un json de los pacientes válidos.
 
    ```bash
    python 01_filter_and_extract_annotations.py
@@ -52,7 +52,7 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
 
 2. **Preprocesamiento de Anotaciones:** 
 
-   Depende de la estrategia que se quiera seguir para procesar los datos:
+   Distintos scripts que se deben ejecutar dependiendo de la estrategia que se quiera seguir para procesar los datos:
 
    - Mantener las cuatro etiquetas originales:
      ```bash
@@ -69,19 +69,19 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
      python 02_preprocess_multiple_annotations_as_one.py --annotations PIRAD4 PIRAD5 --output-label cancer
      ```
 
-3. **Resúmenes de Anotaciones:**
+3. **Resúmenes de Anotaciones:** Analiza el conjunto de datos procesado, contando cuantas anotaciones tiene cada paciente y produce un json que mapea cada id del paciente con sus anotaciones.
 
    ```bash
    python 03_annotated_slices_per_patient.py
    ```
 
-4. **Interpolación y Finalización:**
+4. **Interpolación y Finalización:** Filtra pacientes basado en un número mínimo de anotaciones y un máximo hueco entre anotaciones que se puede modificar dentro del mismo. Interpola anotaciones para crear volumenes y produce un json final, donde tenemos 3 claves por capa del paciente, la ruta al dicom ("slice"), la lista con la anotación realizada por los radiólogos ("label") y el id del paciente ("Folder_id").
 
    ```bash
    python 04_interpolate_and_finalize_annotations.py
    ```
 
-5. **(Opcional) Recorte:**
+5. **(Opcional) Recorte:** Usa el json anterior y el modelo ya entrenado de segmentacion de prostata para recortar la región de interés de las imagenes dicom y sus anotaciones correspondientes, guardando las mismas debajo de la carpeta "data" y creando un nuevo json que describa estos nuevos volumenes recortados.
 
    ```bash
    python cropping_imgs_prostates&lessions/05_preprocess_cropping.py
