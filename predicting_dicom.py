@@ -29,7 +29,8 @@ import torchvision.transforms as transforms
 
 #Dicom path
 dicom_path = sys.argv[1]
-path_model="models/hrnet.pth"
+path_model = sys.argv[2]
+
 
 #Read dicom image
 dicom = pydicom.dcmread(dicom_path)
