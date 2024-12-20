@@ -111,28 +111,30 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    ```bash
    python evaluation/find_th_prostate_testing_sigmoid.py
    ```
+<p align="center">
+  <img src="readme_imgs/roccurve.png" alt="Pipeline de Segmentación" width="45%" />
+  <img src="readme_imgs/conf_mat.png" alt="Resultados de Segmentación" width="45%" />
+</p>
 
 2. **Evaluación con Umbral Definido:**
 
    ```bash
    python evaluation/testing_metrics_for_table_sigmoid.py --selected_threshold 0.202
    ```
+   ![Qualitative Results](readme_imgs/prost_seg_results.png)
 
-3. **Cálculo de Volúmenes:**
+4. **Cálculo de Volúmenes:**
 
    ```bash
    python evaluation/compute_prostate_volume.py --selected_threshold 0.202
    ```
 
-4. **Ejecución Automatizada:**
+5. **Ejecución Automatizada:**
 
    ```bash
    bash run_evaluation.sh
    ```
-<p align="center">
-  <img src="readme_imgs/roccurve.png" alt="Pipeline de Segmentación" width="45%" />
-  <img src="readme_imgs/conf_mat.png" alt="Resultados de Segmentación" width="45%" />
-</p>
+
 
 ## Postprocesamiento
 
