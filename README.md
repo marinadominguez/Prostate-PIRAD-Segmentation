@@ -59,7 +59,7 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
      python 02_preprocess_all_annotations.py
      ```
 
-   - Procesar solo una categoría específica (próstata, PIRAD3, PIRAD4 o PIRAD5):
+   - Procesar solo una etiqueta específica (próstata, PIRAD3, PIRAD4 o PIRAD5):
      ```bash
      python 02_preprocess_one_annotation.py
      ```
