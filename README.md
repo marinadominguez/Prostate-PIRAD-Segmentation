@@ -4,8 +4,6 @@
 
 Se busca desarrollar un sistema que, a partir de imágenes multiparamétricas de Resonancia Magnética (RM) de próstata, clasifique las lesiones según el estándar internacional PIRAD, estimando el riesgo de cáncer de próstata (CaP). El objetivo es reproducir el criterio diagnóstico de un radiólogo experto para reducir la carga de trabajo y disminuir el número de biopsias innecesarias, especialmente en aquellos casos en que la RM determina que no hay riesgo significativo de CaP. De este modo, se espera alcanzar niveles de precisión, sensibilidad y especificidad que permitan apoyar el diagnóstico con garantías. Una vez entrenado, el sistema ofrecerá una clasificación automatizada tanto de la próstata como de la puntuación PIRAD para cada paciente, agilizando la identificación de lesiones potencialmente malignas y sirviendo de soporte en la toma de decisiones clínicas.
 
----
-
 ## Características
 
 - Arquitectura 3D U-Net para la segmentación automática de los volúmenes de la próstata.
@@ -15,15 +13,11 @@ Se busca desarrollar un sistema que, a partir de imágenes multiparamétricas de
 
 (Meter aquí la imagen de la pipeline)
 
----
-
 ## Requisitos
 
 - **Python** 3.8 o superior
 - **Framework de aprendizaje profundo:** PyTorch (y SemTorch para la segmentación y clasificación 2D)
 - **Librerías necesarias:**  `requirements.txt`
-
----
 
 ## Configuración
 
@@ -44,8 +38,6 @@ Se busca desarrollar un sistema que, a partir de imágenes multiparamétricas de
    - Coloca la ruta de tu dataset en `BASE_PATH` dentro del archivo de configuración `config.py` (por razones de privacidad, los datos no están incluidos en el repositorio).
    - Para los recortes de la región de interés de la próstata, crea una carpeta `data` donde se guarden las imágenes recortadas para hacer la segmentación en 2D.
    - Además, las imágenes generadas y las tablas de Excel con resultados se almacenan en `output`, mientras que los modelos entrenados se guardan en `checkpoints`.
-
----
 
 ## Preprocesamiento de Datos de RMN Prostática
 
@@ -97,8 +89,6 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    python cropping_imgs_prostates&lessions/05_preprocess_cropping.py
    ```
 
----
-
 ## Entrenamiento del Modelo
 
 1. **Ajustar Configuración:**
@@ -115,8 +105,6 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    ```bash
    python fine_tuning.py
    ```
-
----
 
 ## Evaluación del Modelo
 
@@ -144,8 +132,6 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    bash run_evaluation.sh
    ```
 
----
-
 ## Postprocesamiento
 
 ### Extracción de la Mayor Componente Conexa:
@@ -154,15 +140,11 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    python postprocessing/compconexamayor_sigmoid.py
    ```
 
----
-
 ## Evaluación de Lesiones (2D)
 
 Mientras no se disponga de datos 3D suficientes para lesiones, se ha incluido el siguiente notebook:
 
 **Notebook:** `Segmentation_Lesion_2D_UNet.py`
-
----
 
 ## Futuras Extensiones
 
