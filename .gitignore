@@ -13,7 +13,6 @@ environment.yml
 *.yaml
 
 # Ignore training checkpoints and logs
-checkpoints/
 logs/
 *.ckpt
 
@@ -23,7 +22,6 @@ dataset/
 *.npy
 *.npz
 *.json
-*.ipynb
 *.png
 
 # Ignore wandb logs and cache

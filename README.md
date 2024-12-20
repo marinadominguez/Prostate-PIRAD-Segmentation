@@ -249,25 +249,36 @@ De esta forma podrás reproducir fácilmente la evaluación con el umbral óptim
 
 Este flujo garantiza una evaluación ajustada a tus objetivos clínicos o de investigación.
 
+## Evaluación de Lesiones: Entrenamiento 2D (Notebook)
 
-## Usage
+Mientras no se disponga de datos 3D suficientes para lesiones, se ha incluido el siguiente notebook: 
+**Notebook:** `Segmentation_Lesion_2D_UNet.py`
 
-- Train the model:
-  ```bash
-  python train.py --config configs/train_config.yml
-  ```
-  
-- Evaluate the model:
-  ```bash
-  python evaluate.py --checkpoint checkpoints/model.pth
-  ```
-  
-- Run segmentation: 
-  ```bash
-  python segment.py --input test_images/ --output results/
-  ```
-  
-## Acknowledgements
-This project was inspired by the work of [source/reference].
-Credits to the open-source libraries used in this project.
+- En este notebook se ilustra el flujo completo en 2D:
+  - *Dataloaders* específicos para las imágenes ya recortadas en `05_preprocess_cropping.py`.
+  - Definición de métricas.
+  - Entrenamiento con una UNet 2D.
+  - Evaluación con métricas finales.
 
+- También se proporciona un modelo preentrenado (`unet-model-unfrozen.pth`) que surge de este notebook.  De esta manera, no es necesario reentrenar desde cero si quieres revisar rápidamente resultados o realizar pruebas.
+
+## Futuras Extensiones
+
+Actualmente, el pipeline se centra en la segmentación prostática. Sin embargo, está previsto entrenar la misma arquitectura (UNet3D) para la detección y segmentación de lesiones. Una vez que se disponga de más datos anotados para lesiones, podrás:
+
+1. **Entrenar el Modelo 3D para Lesiones:**  
+   Podrás seguir el mismo flujo de entrenamiento mostrado para la próstata, pero aplicándolo los recortes de la próstatas obtenidos gracias a esta red ya entrenada y utilizando las etiquetas de las lesiones. El script y los pasos son similares; se puede encontrar el script de entrenamiento en `future_work/trainandval_wtrans_wcropping.py`.
+
+2. **Evaluar el Modelo de Lesiones:**  
+   Está disponible el script `future_work/find_th_cancer_testing.py`, que permite:
+   - Aplicar el modelo al conjunto de prueba con lesiones.
+   - Probar múltiples umbrales de probabilidad.
+   - Calcular métricas (TPR, TNR, PPV, NPV, IoU, AUC) y encontrar el umbral óptimo para las lesiones, siguiendo la misma lógica usada para la próstata.
+
+   Así podrás evaluar el desempeño del modelo en la identificación de lesiones una vez que se tenga el conjunto de datos adecuado.
+
+### En Resumen
+
+- El pipeline actual es extensible para la segmentación de lesiones.
+- Con más datos, podrás entrenar la UNet3D para lesiones y evaluar con los scripts dentro de `future_work`.
+- Mientras tanto, el notebook 2D demuestra el flujo de trabajo y proporciona un modelo ya entrenado como referencia.
