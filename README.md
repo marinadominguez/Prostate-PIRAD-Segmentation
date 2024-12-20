@@ -126,7 +126,7 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    ```
    ![Quuantitative Results](readme_imgs/volumenes.png)
 
-5. **Ejecución Automatizada:**
+5. **Ejecución Automatizada:** Opcionamente, una vez tengamos el umbral óptimo, podemos ejecutar automáticamente los dos últimos scripts desde bash.
 
    ```bash
    bash run_evaluation.sh
