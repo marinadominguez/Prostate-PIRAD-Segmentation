@@ -175,14 +175,15 @@ Actualmente, debido al volumen de datos con el que contamos, se ha podido automa
    Se incluye el Notebook `Segmentation_Lesion_2D_Hrnet.py`, que detalla los pasos necesarios para entrenar una red de segmentación Hrnet 2D enfocada en la clasificación de cáncer.
 2. **Predicción de un dicom**
 Este modelo permite realizar inferencias fácilmente utilizando un archivo DICOM y unos pesos preentrenados. En caso de no contar con datos suficientes para entrenar la red, puedes utilizar los pesos que te proporcionamos.
-El modelo no solo predice si el paciente tiene cáncer, sino que también genera una imagen output.png con la segmentación de la lesión.
+El modelo no solo predice si el paciente tiene cáncer, sino que también genera una imagen `output.png` con la segmentación de la lesión.
+
    Pasos a seguir:
-   - Descargar los pesos del modelo:
+   - **Descargar los pesos del modelo:**
      ```bash
       wget https://github.com/marinadominguez/Prostate-PIRAD-Segmentation/releases/download/hrnet/hrnet.pth
       ```
        
-   - Inferencia:
+   - **Inferencia:**
      Asegúrate de proporcionar la ruta del archivo DICOM y la de los pesos:
      ```bash
       python predicting_dicom.py <path_dicom.dcm> <path_weights.pth>
