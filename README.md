@@ -129,6 +129,10 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    ```bash
    bash run_evaluation.sh
    ```
+<p align="center">
+  <img src="readme_imgs/roccurve.png" alt="Pipeline de Segmentación" width="45%" />
+  <img src="readme_imgs/conf_mat.png" alt="Resultados de Segmentación" width="45%" />
+</p>
 
 ## Postprocesamiento
 
