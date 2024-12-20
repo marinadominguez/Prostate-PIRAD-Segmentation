@@ -128,6 +128,7 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
    ```bash
    python evaluation/compute_prostate_volume.py --selected_threshold 0.202
    ```
+   ![Quuantitative Results](readme_imgs/volumenes.png)
 
 5. **Ejecución Automatizada:**
 
