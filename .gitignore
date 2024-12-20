@@ -22,7 +22,7 @@ dataset/
 *.npy
 *.npz
 *.json
-*.png
+*.pth
 
 # Ignore wandb logs and cache
 wandb/

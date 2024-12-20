@@ -77,5 +77,6 @@ config = {
     "train_cuda": TRAIN_CUDA,
     "save_interval": SAVE_INTERVAL,
     "test_batch_size": TEST_BATCH_SIZE,
-    "save_checkpoint_path": SAVE_CHECKPOINT_PATH
+    "save_checkpoint_path": SAVE_CHECKPOINT_PATH, 
+    "selected_threshold": SELECTED_THRESHOLD,
 }
