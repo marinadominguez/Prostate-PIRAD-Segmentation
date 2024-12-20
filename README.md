@@ -147,6 +147,12 @@ Mientras no se disponga de datos 3D suficientes para lesiones, se ha incluido el
 
 **Notebook:** `Segmentation_Lesion_2D_UNet.py`
 
+- En este notebook se ilustra el flujo completo en 2D:
+    - Dataloaders específicos para las imágenes ya recortadas en `05_preprocess_cropping.py`.
+    - Definición de métricas.
+    - Entrenamiento con una UNet 2D.
+    - Evaluación con métricas finales.
+
 ## Futuras Extensiones
 
 Actualmente, el pipeline se centra en la segmentación prostática. Sin embargo, está previsto entrenar la misma arquitectura (UNet3D) para la detección y segmentación de lesiones. Una vez que se disponga de más datos anotados para lesiones, podrás:
