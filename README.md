@@ -69,7 +69,7 @@ Dentro de estos scripts se encuentran las rutas que deben ser configuradas. Adem
      python 02_preprocess_multiple_annotations_as_one.py --annotations PIRAD4 PIRAD5 --output-label cancer
      ```
 
-3. **Resúmenes de Anotaciones:** (Estos son necesarios para la técnica de preprocesamiento de interpolación que vamos a aplicar a continuación)
+3. **Resúmenes de Anotaciones:**
 
    ```bash
    python 03_annotated_slices_per_patient.py
