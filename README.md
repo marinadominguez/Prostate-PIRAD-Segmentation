@@ -171,3 +171,7 @@ Actualmente, debido al volumen de datos con el que contamos, se ha podido automa
 
 ## Clasificación del cáncer (2d)
 
+Descargar pesos:
+https://github.com/marinadominguez/Prostate-PIRAD-Segmentation/releases/download/hrnet/hrnet.pth
+
+
