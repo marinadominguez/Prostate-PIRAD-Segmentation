@@ -201,6 +201,55 @@ pyhton postprocessing/compconexamayor_sigmoid.py
 - Repite el ciclo entrenando, afinando y evaluando el modelo hasta obtener el rendimiento deseado.
 
 
+## Evaluación del Modelo
+
+Esta sección describe cómo evaluar el modelo entrenado, seleccionar el umbral óptimo de segmentación y, opcionalmente, calcular volúmenes prostáticos. Los pasos son independientes, de modo que puedes ejecutarlos todos o solo aquellos que necesites.
+
+### 1. Encontrar el Umbral Óptimo
+
+1. Ejecuta el script:
+   ```bash
+   python evaluation/find_th_prostate_testing_sigmoid.py
+   ```
+2. Se generará un archivo Excel con métricas (TPR, TNR, PPV, NPV, IoU, AUC) para distintos umbrales.
+3. Examina el Excel y elige manualmente el umbral que mejor se ajuste a las necesidades clínicas.
+
+### 2. Evaluar con el Umbral Seleccionado
+
+1. Edita el script o pasa el umbral elegido como argumento (según tu implementación).
+2. Ejecuta:
+   ```bash
+   python evaluation/testing_metrics_for_table_sigmoid.py --threshold 0.202
+   ```
+3. Se calcularán métricas finales con ese umbral y se generarán visualizaciones (p.ej., imágenes con segmentaciones, matriz de confusión, curva ROC). Esto proporciona una evaluación definitiva y coherente con el umbral seleccionado.
+
+### 3. (Opcional) Calcular Volúmenes
+
+1. Con el umbral ya definido, ejecuta:
+   ```bash
+   python evaluation/compute_prostate_volume.py --threshold 0.202
+   ```
+2. El script producirá un Excel con el volumen estimado de la próstata por slice y por paciente, útil si requieres mediciones anatómicas cuantitativas.
+
+### Ejecución Automatizada (Opcional)
+
+Puedes usar el archivo bash: `run_evaluation.sh`. Una vez encuentres el umbral óptimo, puedes ejecutarlo para evaluar y calcular los volumenes 
+
+Ejecuta:
+```bash
+bash run_evaluation.sh
+```
+
+De esta forma podrás reproducir fácilmente la evaluación con el umbral óptimo.
+
+**En resumen:**  
+- Usa `find_th_prostate_testing_sigmoid.py` para encontrar el umbral óptimo.  
+- Usa `testing_metrics_for_table_sigmoid.py` para las métricas finales con el umbral elegido.  
+- Usa `compute_prostate_volume.py` para obtener volúmenes.  
+
+Este flujo garantiza una evaluación ajustada a tus objetivos clínicos o de investigación.
+
+
 ## Usage
 
 - Train the model:

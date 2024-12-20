@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
-import wandb
-
-import matplotlib.pyplot as plt
-import numpy as np
-import wandb
 
 def visualize_slices_labels_prediction_overlap(resized_images, resized_labels, predictions, num_rows, num_cols, figsize=(10, 60)):
     """
@@ -50,11 +45,7 @@ def visualize_slices_labels_prediction_overlap(resized_images, resized_labels, p
         ax[i, 3].axis('off')
         ax[i, 3].set_title('Overlap ' + str(i))
 
-    plt.tight_layout()
-    # Save and log the plot
-    generated_plot = plt.gcf()
-    wandb.log({"Slices Labels Prediction Overlap": wandb.Image(generated_plot)})
-    plt.close()
+    return fig 
 
 
 def visualize_slice_predictions(resized_images, resized_labels, outputs, outputs_softmax, outputs_argmax, thresholded, slice_index, patient_index=None, figsize=(35, 5)):
@@ -122,13 +113,7 @@ def visualize_slice_predictions(resized_images, resized_labels, outputs, outputs
     plt.title('Thresholded')
     plt.axis('off')
 
-    # Save and log the plot
-    generated_plot = plt.gcf()
-    wandb.log({"Test Patients Results": wandb.Image(generated_plot)})
-    if patient_index is not None:
-        print(f"Patient {patient_index} slice {slice_index} plotted")
-
-    plt.close()
+    return plt
 
 
 def visualize_crf_results(resized_images, resized_labels, outputs_argmax, prostate_probability_map, refined_prediction, slice_idx):
@@ -161,7 +146,5 @@ def visualize_crf_results(resized_images, resized_labels, outputs_argmax, prosta
     for ax in axs:
         ax.axis('off')
 
-    plt.show()
-    wandb.log({"Refined Prediction": wandb.Image(plt)})
-    plt.close()
+    return fig
         

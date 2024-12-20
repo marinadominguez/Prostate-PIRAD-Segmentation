@@ -120,17 +120,23 @@ with torch.no_grad():
                 all_predictions.append(predictions[slice, :, :].cpu().numpy())
                 all_softmax_predictions_class1.append(outputs_sigmoid[0, 1, slice, :, :].cpu().numpy())
                 if count_predictions < 10:
-                    visualize_slice_predictions(resized_images, resized_labels, outputs, outputs_sigmoid, outputs_argmax, predictions, slice)
+                    fig = visualize_slice_predictions(resized_images, resized_labels, outputs, outputs_sigmoid, outputs_argmax, predictions, slice)
+                    fig_filename = f"output/CCM/componente_conexa_mayor_slice_{count_predictions}.png"
+                    fig.savefig(fig_filename)
+                    plt.close(fig)
                     count_predictions += 1
         # Visualización para todas las slices
         if count_overlapping_predictions < 10:
-            visualize_slices_labels_prediction_overlap(resized_images, resized_labels, predictions, 32, 4, figsize=(10, 60))
+            fig = visualize_slices_labels_prediction_overlap(resized_images, resized_labels, predictions, 32, 4, figsize=(10, 60))
+            fig_filename = f"output/CCM/componente_conexa_mayor_overlap_{count_overlapping_predictions}.png"
+            fig.savefig(fig_filename)
+            plt.close(fig)
             count_overlapping_predictions += 1
 
 # Convertir a numpy arrays
-all_ground_truths = np.array(all_ground_truths) # all the slices of all the patients labeled and not labeled (label column in the image)
-all_predictions = np.array(all_predictions) # all the predictions of all the slices of all the patients (prediction column in the image)
-all_softmax_predictions_class1 = np.array(all_softmax_predictions_class1) # all the softmax predictions of all the slices of all the patients (softmax for class 1 column in the 2nd image)
+all_ground_truths = np.array(all_ground_truths) 
+all_predictions = np.array(all_predictions) 
+all_softmax_predictions_class1 = np.array(all_softmax_predictions_class1) 
 
 # Aplanar para cálculo de métricas
 gt_flat = all_ground_truths.flatten()
@@ -197,7 +203,7 @@ metrics_dict = {
 metrics_df = pd.DataFrame(metrics_dict)
 
 # Guardar las métricas en un archivo Excel
-metrics_filename = "output/componente_conexa_mayor_metricas.xlsx"
+metrics_filename = "output/CCM/componente_conexa_mayor_metricas.xlsx"
 metrics_df.to_excel(metrics_filename, index=False)
 
 
@@ -211,6 +217,6 @@ ax.set_xticklabels(['Positive', 'Negative'])
 ax.set_yticklabels(['Positive', 'Negative'])
 ax.set_title('Confusion Matrix')
 plt.show()
-confusion_matrix_filename = "output/componente_conexa_mayor_confusion_matrix.png"
+confusion_matrix_filename = "output/CCM/componente_conexa_mayor_confusion_matrix.png"
 fig.savefig(confusion_matrix_filename)
 plt.close()
