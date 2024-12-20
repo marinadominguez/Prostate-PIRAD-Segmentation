@@ -155,23 +155,19 @@ Mientras no se disponga de datos 3D suficientes para lesiones, se ha incluido el
 
 ## Futuras Extensiones
 
-Actualmente, el pipeline se centra en la segmentación prostática. Sin embargo, está previsto entrenar la misma arquitectura (UNet3D) para la detección y segmentación de lesiones. Una vez que se disponga de más datos anotados para lesiones, podrás:
+Actualmente, debido al volumen de datos con el que contamos, se ha podido automatizar la segmentación prostática. Sin embargo, está previsto entrenar la misma arquitectura (UNet3D) para la detección y segmentación de lesiones. Una vez que se disponga de más datos anotados para lesiones, podrás:
 
 1. **Entrenar el Modelo 3D para Lesiones:**
-   Podrás seguir el mismo flujo de entrenamiento mostrado para la próstata, pero aplicándolo los recortes de la próstatas obtenidos gracias a esta red ya entrenada y utilizando las etiquetas de las lesiones. El script y los pasos son similares; se puede encontrar el script de entrenamiento en:
+   Podrás seguir el mismo flujo de entrenamiento mostrado para la próstata, pero aplicándolo los recortes de la próstatas obtenidos gracias a esta red ya entrenada y utilizando las etiquetas de las lesiones. El script y los pasos son similares; ejecuta para entrenar el modelo:
    ```bash
    python future_work/trainandval_wtrans_wcropping.py
    ```
 
 3. **Evaluar el Modelo de Lesiones:**
-   Está disponible el script 
+   Ejecuta para evaluar el modelo:  
    ```bash
    python future_work/find_th_cancer_testing.py
    ```
-   , que permite:
 
-- Aplicar el modelo al conjunto de prueba con lesiones.
-- Probar múltiples umbrales de probabilidad.
-- Calcular métricas (TPR, TNR, PPV, NPV, IoU, AUC) y encontrar el umbral óptimo para las lesiones, siguiendo la misma lógica usada para la próstata.
+## Clasificación del cáncer (2d)
 
-Así podrás evaluar el desempeño del modelo en la identificación de lesiones una vez que se tenga el conjunto de datos adecuado.
